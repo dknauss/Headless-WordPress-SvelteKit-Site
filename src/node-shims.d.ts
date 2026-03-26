@@ -1,6 +1,8 @@
 declare module 'node:fs' {
 	const fs: {
 		mkdirSync(path: string, options?: { recursive?: boolean }): void;
+		mkdtempSync(prefix: string): string;
+		rmSync(path: string, options?: { recursive?: boolean; force?: boolean }): void;
 	};
 
 	export default fs;
@@ -13,6 +15,14 @@ declare module 'node:path' {
 	};
 
 	export default path;
+}
+
+declare module 'node:os' {
+	const os: {
+		tmpdir(): string;
+	};
+
+	export default os;
 }
 
 declare module 'node:crypto' {

@@ -21,8 +21,13 @@
 <svelte:window on:click={handleClickOutside} />
 
 <div bind:this={rowEl} class="cards-row">
-	{#each cards as card, i}
-		<Card {card} expanded={expandedIndex === i} index={i} on:toggle={() => handleToggle(i)} />
+	{#each cards as card, i (card.id)}
+		<Card
+			{card}
+			expanded={expandedIndex === i}
+			index={i}
+			on:toggle={() => handleToggle(i)}
+		/>
 	{/each}
 </div>
 

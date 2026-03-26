@@ -1,19 +1,24 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { getCards } from '$lib/api';
 	import CardRow from '../components/CardRow.svelte';
 	import type { Card as CardType } from '$lib/types';
+	import type { PageData } from './$types';
 
-	let cards: CardType[] = [];
-	let loading = true;
-	let error = '';
+	export let data: PageData;
+
+	let cards: CardType[] = data.cards;
+	let error = data.error;
 	let currentPage = 0;
 	const perPage = 6;
 
-	$: totalPages = Math.ceil(cards.length / perPage);
+	$: cards = data.cards;
+	$: error = data.error;
+	$: totalPages = Math.max(1, Math.ceil(cards.length / perPage));
 	$: paginatedCards = cards.slice(currentPage * perPage, (currentPage + 1) * perPage);
 	$: hasPrev = currentPage > 0;
 	$: hasNext = currentPage < totalPages - 1;
+	$: if (currentPage > totalPages - 1) {
+		currentPage = Math.max(totalPages - 1, 0);
+	}
 
 	function nextPage() {
 		if (hasNext) currentPage++;
@@ -22,29 +27,15 @@
 	function prevPage() {
 		if (hasPrev) currentPage--;
 	}
-
-	onMount(async () => {
-		try {
-			const result = await getCards();
-			cards = result.posts.nodes;
-		} catch (err) {
-			console.error('Error fetching cards:', err);
-		} finally {
-			loading = false;
-		}
-	});
 </script>
 
 <div class="container">
 	<header class="page-header">
 		<h1 class="comic-title">Trading Card <br />Collection</h1>
 		<div class="comic-subtitle">THE HERO ARCHIVE</div>
-
 	</header>
 
-	{#if loading}
-		<p class="message animate-pulse">Scanning database...</p>
-	{:else if error}
+	{#if error}
 		<p class="message error">CRITICAL ERROR: {error}</p>
 	{:else if cards.length === 0}
 		<p class="message">No heroes detected in this sector.</p>
@@ -60,7 +51,7 @@
 				</button>
 			</nav>
 
-		<CardRow cards={paginatedCards} />
+			<CardRow cards={paginatedCards} />
 		</div>
 	{/if}
 </div>
@@ -120,20 +111,6 @@
 		gap: 2.5rem;
 		max-width: 75%;
 		margin-inline: auto;
-	}
-
-	.animate-pulse {
-		animation: pulse 1.5s infinite;
-	}
-
-	@keyframes pulse {
-		0%,
-		100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.5;
-		}
 	}
 
 	.pagination {

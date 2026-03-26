@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { decrementRating, incrementRating } from '$lib/rating';
 	import type { Card } from '$lib/types';
 
 	export let card: Card;
@@ -8,41 +9,112 @@
 
 	const dispatch = createEventDispatcher();
 
+	let hasVoted = card.viewerHasVoted ?? false;
+	let isVoting = false;
+
+	$: if (!isVoting) {
+		hasVoted = card.viewerHasVoted ?? false;
+	}
+	$: ratingText = String(card.rating ?? 0);
+	$: isMultiDigitRating = ratingText.length > 1;
+
 	function toggleExpand() {
 		dispatch('toggle');
 	}
+
+	function handleCardKeydown(event: KeyboardEvent) {
+		if (event.target !== event.currentTarget) {
+			return;
+		}
+
+		if (event.key !== 'Enter' && event.key !== ' ') {
+			return;
+		}
+
+		event.preventDefault();
+		toggleExpand();
+	}
+
+	async function handleRatingClick(event: MouseEvent) {
+		event.stopPropagation();
+
+		if (isVoting || !card.id) {
+			return;
+		}
+
+		const previousRating = card.rating ?? 0;
+		const previousHasVoted = hasVoted;
+		const isRemovingVote = hasVoted;
+		const optimisticRating = Math.max(0, previousRating + (isRemovingVote ? -1 : 1));
+
+		isVoting = true;
+		hasVoted = !isRemovingVote;
+		card.viewerHasVoted = hasVoted;
+		card.rating = optimisticRating;
+		card = card;
+
+		try {
+			const result = isRemovingVote
+				? await decrementRating(card.id)
+				: await incrementRating(card.id);
+
+			card.rating = result.rating;
+			hasVoted = result.hasVoted;
+			card.viewerHasVoted = result.hasVoted;
+			card = card;
+		} catch (error) {
+			hasVoted = previousHasVoted;
+			card.viewerHasVoted = previousHasVoted;
+			card.rating = previousRating;
+			card = card;
+			console.error('Failed to update rating:', error);
+		} finally {
+			isVoting = false;
+		}
+	}
 </script>
 
-<button
-	type="button"
+<div
 	class="trading-card"
 	class:expanded={expanded}
+	role="button"
+	tabindex="0"
 	aria-expanded={expanded}
+	aria-label={`Toggle details for ${card.title}`}
 	on:click={toggleExpand}
-	style:animation-delay="{index * 80}ms"
+	on:keydown={handleCardKeydown}
+	style:animation-delay={`${index * 80}ms`}
 >
 	<div class="card-content">
 		<div class="image-wrapper">
 			{#if card.featuredImage?.node?.sourceUrl}
-				<img src={card.featuredImage.node.sourceUrl} alt={card.title} loading="lazy" />
+				<img src={card.featuredImage.node.sourceUrl} alt={card.title} loading="lazy" decoding="async" />
 			{:else}
 				<div class="no-image">NO HERO DATA</div>
 			{/if}
 		</div>
 
-		{#if card.rating !== undefined && card.rating !== null}
-			<div class="rating-starburst" aria-hidden="true">
-				<svg viewBox="0 0 100 100" class="starburst-svg">
-					<polygon
-						points="50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35"
-						fill="var(--color-hero-yellow)"
-						stroke="black"
-						stroke-width="4"
-					/>
-				</svg>
-				<span class="rating-value">{card.rating}</span>
-			</div>
-		{/if}
+		<button
+			class="rating-starburst"
+			class:voted={hasVoted}
+			class:voting={isVoting}
+			class:multi-digit={isMultiDigitRating}
+			on:click={handleRatingClick}
+			aria-label={hasVoted ? `Remove rating for ${card.title}` : `Rate ${card.title}`}
+			aria-pressed={hasVoted}
+			disabled={isVoting || !card.id}
+			type="button"
+		>
+			<svg viewBox="0 0 100 100" class="starburst-svg" aria-hidden="true">
+				<polygon
+					points="50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35"
+					fill={hasVoted ? 'var(--color-hero-red)' : 'var(--color-hero-yellow)'}
+					stroke="black"
+					stroke-width="4"
+				/>
+			</svg>
+			<span class="rating-value">{ratingText}</span>
+		</button>
 
 		<div class="card-body">
 			<h3>{card.title}</h3>
@@ -67,7 +139,7 @@
 			</div>
 		</div>
 	</div>
-</button>
+</div>
 
 <style>
 	.trading-card {
@@ -95,7 +167,7 @@
 	}
 
 	.trading-card::before {
-		content: "";
+		content: '';
 		position: absolute;
 		top: 3px;
 		left: 3px;
@@ -200,7 +272,39 @@
 		justify-content: center;
 		filter: drop-shadow(3px 3px 0px black);
 		z-index: 20;
-		pointer-events: none;
+		background: transparent;
+		border: 0;
+		padding: 0;
+		cursor: pointer;
+		transition:
+			transform 0.2s ease-out,
+			filter 0.2s ease-out,
+			opacity 0.2s ease-out;
+	}
+
+	.rating-starburst:focus-visible {
+		outline: 3px solid var(--color-hero-yellow);
+		outline-offset: 4px;
+	}
+
+	.rating-starburst:hover:not(:disabled) {
+		transform: scale(1.04) rotate(-8deg);
+	}
+
+	.rating-starburst:active:not(:disabled) {
+		transform: scale(0.98);
+	}
+
+	.rating-starburst.voted {
+		filter: drop-shadow(3px 3px 0px var(--color-hero-black));
+	}
+
+	.rating-starburst.voting {
+		opacity: 0.75;
+	}
+
+	.rating-starburst:disabled {
+		cursor: progress;
 	}
 
 	.starburst-svg {
@@ -225,6 +329,10 @@
 		font-size: 1.6rem;
 		color: var(--color-hero-black);
 		z-index: 2;
+	}
+
+	.rating-starburst.multi-digit .rating-value {
+		font-size: 1.25rem;
 	}
 
 	.card-body {
@@ -364,6 +472,10 @@
 			font-size: 1.3rem;
 		}
 
+		.rating-starburst.multi-digit .rating-value {
+			font-size: 1.1rem;
+		}
+
 		.image-wrapper {
 			border-bottom-width: 2px;
 		}
@@ -408,6 +520,10 @@
 			font-size: 1.1rem;
 		}
 
+		.rating-starburst.multi-digit .rating-value {
+			font-size: 0.95rem;
+		}
+
 		.excerpt {
 			font-size: 1rem;
 		}
@@ -418,7 +534,8 @@
 		.excerpt-accordion,
 		.excerpt-accordion.open,
 		.trading-card::before,
-		.expand-prompt {
+		.expand-prompt,
+		.rating-starburst {
 			transition: none;
 		}
 

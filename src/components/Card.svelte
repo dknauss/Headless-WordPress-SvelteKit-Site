@@ -25,6 +25,13 @@
 		return Number(normalized.toFixed(2));
 	}
 
+	function toDomId(value: string) {
+		return value
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '');
+	}
+
 	let hasVoted = card.viewerHasVoted ?? false;
 	let isVoting = false;
 
@@ -34,22 +41,13 @@
 	$: restRotation = getRestRotation(card.id || card.slug || card.title || String(index));
 	$: ratingText = String(card.rating ?? 0);
 	$: isMultiDigitRating = ratingText.length > 1;
+	$: cardDomId = toDomId(card.id || card.slug || card.title || `card-${index}`);
+	$: titleId = `card-title-${cardDomId}`;
+	$: detailsId = `card-details-${cardDomId}`;
+	$: ratingStatusId = `card-rating-status-${cardDomId}`;
 
 	function toggleExpand() {
 		dispatch('toggle');
-	}
-
-	function handleCardKeydown(event: KeyboardEvent) {
-		if (event.target !== event.currentTarget) {
-			return;
-		}
-
-		if (event.key !== 'Enter' && event.key !== ' ') {
-			return;
-		}
-
-		event.preventDefault();
-		toggleExpand();
 	}
 
 	async function handleRatingClick(event: MouseEvent) {
@@ -91,86 +89,91 @@
 	}
 </script>
 
-<div
-	class="trading-card"
+<article
+	class="trading-card-shell"
 	class:expanded={expanded}
-	role="button"
-	tabindex="0"
-	aria-expanded={expanded}
-	aria-label={`Toggle details for ${card.title}`}
-	on:click={toggleExpand}
-	on:keydown={handleCardKeydown}
 	style:animation-delay={`${index * 80}ms`}
 	style:--rest-rotation={`${restRotation}deg`}
 >
+	<button
+		class="rating-starburst"
+		class:voted={hasVoted}
+		class:voting={isVoting}
+		class:multi-digit={isMultiDigitRating}
+		on:click={handleRatingClick}
+		aria-label={hasVoted ? `Remove rating for ${card.title}` : `Rate ${card.title}`}
+		aria-pressed={hasVoted}
+		aria-describedby={ratingStatusId}
+		disabled={isVoting || !card.id}
+		type="button"
+	>
+		<svg viewBox="0 0 100 100" class="starburst-svg" aria-hidden="true">
+			<polygon
+				points="50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35"
+				fill={hasVoted ? 'var(--color-hero-red)' : 'var(--color-hero-yellow)'}
+				stroke="black"
+				stroke-width="4"
+			/>
+		</svg>
+		<span class="rating-value" aria-hidden="true">{ratingText}</span>
+	</button>
+	<span id={ratingStatusId} class="screen-reader-text" aria-live="polite">
+		Rating {ratingText}. {hasVoted ? 'Your rating is currently applied.' : 'You have not rated this card yet.'}
+	</span>
+
 	<div class="card-content">
-		<div class="image-wrapper">
-			{#if card.featuredImage?.node?.sourceUrl}
-				<img src={card.featuredImage.node.sourceUrl} alt={card.title} loading="lazy" decoding="async" />
-			{:else}
-				<div class="no-image">NO HERO DATA</div>
-			{/if}
-		</div>
-
 		<button
-			class="rating-starburst"
-			class:voted={hasVoted}
-			class:voting={isVoting}
-			class:multi-digit={isMultiDigitRating}
-			on:click={handleRatingClick}
-			aria-label={hasVoted ? `Remove rating for ${card.title}` : `Rate ${card.title}`}
-			aria-pressed={hasVoted}
-			disabled={isVoting || !card.id}
+			class="card-toggle"
 			type="button"
+			aria-expanded={expanded}
+			aria-controls={detailsId}
+			on:click={toggleExpand}
 		>
-			<svg viewBox="0 0 100 100" class="starburst-svg" aria-hidden="true">
-				<polygon
-					points="50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35"
-					fill={hasVoted ? 'var(--color-hero-red)' : 'var(--color-hero-yellow)'}
-					stroke="black"
-					stroke-width="4"
-				/>
-			</svg>
-			<span class="rating-value">{ratingText}</span>
-		</button>
-
-		<div class="card-body">
-			<h3>{card.title}</h3>
-
-			<div class="card-meta">
-				{#if card.categories?.nodes?.length}
-					<span class="card-set">
-						{card.categories.nodes[0].name}
-					</span>
+			<div class="image-wrapper">
+				{#if card.featuredImage?.node?.sourceUrl}
+					<img src={card.featuredImage.node.sourceUrl} alt={card.title} loading="lazy" decoding="async" />
+				{:else}
+					<div class="no-image">NO HERO DATA</div>
 				{/if}
-
-				<div class="expand-prompt" class:hidden={expanded}>
-					<span class="expand-prompt-desktop">CLICK ME</span>
-					<span class="expand-prompt-mobile">TAP ME</span>
-				</div>
 			</div>
 
-			<div class="excerpt-accordion" class:open={expanded}>
+			<div class="card-body">
+				<h2 id={titleId}>{card.title}</h2>
+
+				<div class="card-meta">
+					{#if card.categories?.nodes?.length}
+						<span class="card-set">
+							{card.categories.nodes[0].name}
+						</span>
+					{/if}
+
+					<div class="expand-prompt" class:hidden={expanded} aria-hidden={expanded}>
+						<span class="expand-prompt-desktop">CLICK ME</span>
+						<span class="expand-prompt-mobile">TAP ME</span>
+					</div>
+				</div>
+			</div>
+		</button>
+
+		{#if expanded}
+			<div class="excerpt-accordion open" id={detailsId} role="region" aria-labelledby={titleId}>
 				<div class="excerpt-content">
 					<div class="excerpt">{@html card.excerpt}</div>
 				</div>
 			</div>
-		</div>
+		{/if}
 	</div>
-</div>
+</article>
 
 <style>
-	.trading-card {
+	.trading-card-shell {
 		background: transparent;
 		border: none;
 		transition:
 			transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
 			box-shadow 0.15s ease;
 		position: relative;
-		cursor: pointer;
 		overflow: visible;
-		padding: 0;
-		text-align: left;
 		-webkit-tap-highlight-color: transparent;
 		box-shadow: var(--comic-shadow);
 		transform: rotate(var(--rest-rotation, 0deg));
@@ -188,20 +191,15 @@
 		}
 	}
 
-	.trading-card:focus-visible {
-		outline: 4px solid var(--color-hero-yellow);
-		outline-offset: 6px;
-	}
-
 	@media (hover: hover) {
-		.trading-card:hover {
+		.trading-card-shell:hover {
 			transform: scale(1.02) rotate(0deg);
 			z-index: 10;
 			box-shadow: 10px 10px 0px var(--color-hero-black);
 		}
 	}
 
-	.trading-card.expanded {
+	.trading-card-shell.expanded {
 		transform: scale(1.02) rotate(0deg);
 		z-index: 15;
 		box-shadow: 12px 12px 0px var(--color-hero-red);
@@ -228,12 +226,25 @@
 		background-size: 4px 4px;
 	}
 
-	.trading-card.expanded .card-content {
+	.trading-card-shell.expanded .card-content {
 		border-color: var(--color-hero-red);
 	}
 
-	.trading-card.expanded .card-body {
-		overflow-y: auto;
+	.card-toggle {
+		display: block;
+		width: 100%;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		color: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.card-toggle:focus-visible,
+	.rating-starburst:focus-visible {
+		outline: 4px solid var(--color-hero-yellow);
+		outline-offset: 6px;
 	}
 
 	.image-wrapper {
@@ -282,11 +293,6 @@
 			transform 0.2s ease-out,
 			filter 0.2s ease-out,
 			opacity 0.2s ease-out;
-	}
-
-	.rating-starburst:focus-visible {
-		outline: 3px solid var(--color-hero-yellow);
-		outline-offset: 4px;
 	}
 
 	.rating-starburst:hover:not(:disabled) {
@@ -357,7 +363,7 @@
 		min-width: 220px;
 	}
 
-	h3 {
+	h2 {
 		margin: 0;
 		min-height: 65px;
 		font-size: 1.8rem;
@@ -392,14 +398,8 @@
 
 	.excerpt-accordion {
 		display: grid;
-		grid-template-rows: 0fr;
-		transition: grid-template-rows 1s cubic-bezier(0.25, 0.1, 0.25, 1);
-		overflow: hidden;
-	}
-
-	.excerpt-accordion.open {
 		grid-template-rows: 1fr;
-		transition: grid-template-rows 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+		overflow: hidden;
 	}
 
 	.excerpt-content {
@@ -411,7 +411,7 @@
 		font-size: 1.1rem;
 		color: #1a1a1a;
 		line-height: 1.5;
-		padding-top: 1rem;
+		padding: 1rem 1.2rem 1.2rem;
 		border-top: 2px dashed #ccc;
 	}
 
@@ -446,7 +446,8 @@
 	}
 
 	@media (hover: hover) {
-		.trading-card:hover .expand-prompt {
+		.trading-card-shell:hover .expand-prompt,
+		.card-toggle:focus-visible .expand-prompt {
 			color: var(--color-hero-red);
 			border-color: var(--color-hero-red);
 			background-color: rgba(239, 68, 68, 0.08);
@@ -464,7 +465,7 @@
 	}
 
 	@media (max-width: 768px) {
-		h3 {
+		h2 {
 			font-size: 1.5rem;
 		}
 
@@ -472,6 +473,10 @@
 			padding: 1rem;
 			gap: 0.6rem;
 			height: fit-content;
+		}
+
+		.excerpt {
+			padding: 1rem;
 		}
 
 		.rating-starburst {
@@ -507,7 +512,7 @@
 	}
 
 	@media (max-width: 480px) {
-		h3 {
+		h2 {
 			font-size: 1.3rem;
 			-webkit-text-stroke: 0.5px black;
 		}
@@ -539,24 +544,26 @@
 
 		.excerpt {
 			font-size: 1rem;
+			padding: 0.8rem;
 		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.trading-card,
-		.excerpt-accordion,
-		.excerpt-accordion.open,
+		.trading-card-shell,
 		.expand-prompt,
 		.rating-starburst {
 			transition: none;
 		}
 
-		.trading-card {
+		.starburst-svg,
+		.card-content {
 			animation: none;
 		}
 
-		.starburst-svg {
-			animation: none;
+		.trading-card-shell,
+		.trading-card-shell:hover,
+		.trading-card-shell.expanded {
+			transform: none;
 		}
 	}
 </style>

@@ -29,7 +29,11 @@
 	}
 </script>
 
-<div class="container">
+<svelte:head>
+	<title>Trading Card Collection</title>
+</svelte:head>
+
+<main class="container">
 	<header class="page-header">
 		<h1 class="comic-title">Trading Card <br />Collection</h1>
 		<div class="comic-subtitle">THE HERO ARCHIVE</div>
@@ -42,11 +46,11 @@
 	{:else}
 		<div class="cards-grid">
 			<nav class="pagination" aria-label="Card pages">
-				<button class="pagination-btn" disabled={!hasPrev} on:click={prevPage}>
+				<button class="pagination-btn" type="button" disabled={!hasPrev} on:click={prevPage}>
 					PREVIOUS
 				</button>
 				<span class="page-indicator">PAGE {currentPage + 1} OF {totalPages}</span>
-				<button class="pagination-btn" disabled={!hasNext} on:click={nextPage}>
+				<button class="pagination-btn" type="button" disabled={!hasNext} on:click={nextPage}>
 					NEXT
 				</button>
 			</nav>
@@ -54,7 +58,7 @@
 			<CardRow cards={paginatedCards} />
 		</div>
 	{/if}
-</div>
+</main>
 
 <style>
 	.container {
@@ -144,6 +148,11 @@
 	.pagination-btn:disabled {
 		opacity: 0.35;
 		cursor: not-allowed;
+	}
+
+	.pagination-btn:focus-visible {
+		outline: 4px solid var(--color-hero-yellow);
+		outline-offset: 4px;
 	}
 
 	.page-indicator {

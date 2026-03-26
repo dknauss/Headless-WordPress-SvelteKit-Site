@@ -9,12 +9,29 @@
 
 	const dispatch = createEventDispatcher();
 
+	function getRestRotation(seed: string) {
+		let hash = 0;
+
+		for (let i = 0; i < seed.length; i += 1) {
+			hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+		}
+
+		const normalized = ((Math.abs(hash) % 1000) / 1000) * 4 - 2;
+
+		if (Math.abs(normalized) < 0.35) {
+			return normalized < 0 ? -0.6 : 0.6;
+		}
+
+		return Number(normalized.toFixed(2));
+	}
+
 	let hasVoted = card.viewerHasVoted ?? false;
 	let isVoting = false;
 
 	$: if (!isVoting) {
 		hasVoted = card.viewerHasVoted ?? false;
 	}
+	$: restRotation = getRestRotation(card.id || card.slug || card.title || String(index));
 	$: ratingText = String(card.rating ?? 0);
 	$: isMultiDigitRating = ratingText.length > 1;
 
@@ -84,6 +101,7 @@
 	on:click={toggleExpand}
 	on:keydown={handleCardKeydown}
 	style:animation-delay={`${index * 80}ms`}
+	style:--rest-rotation={`${restRotation}deg`}
 >
 	<div class="card-content">
 		<div class="image-wrapper">
@@ -145,14 +163,18 @@
 	.trading-card {
 		background: transparent;
 		border: none;
-		transition: transform 0.2s ease-out;
+		transition:
+			transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+			box-shadow 0.15s ease;
 		position: relative;
 		cursor: pointer;
 		overflow: visible;
 		padding: 0;
 		text-align: left;
 		-webkit-tap-highlight-color: transparent;
-		animation: card-enter 1s ease-out both;
+		box-shadow: var(--comic-shadow);
+		transform: rotate(var(--rest-rotation, 0deg));
+		transform-origin: center center;
 	}
 
 	@keyframes card-enter {
@@ -166,26 +188,6 @@
 		}
 	}
 
-	.trading-card::before {
-		content: '';
-		position: absolute;
-		top: 3px;
-		left: 3px;
-		width: 100%;
-		height: 100%;
-		background-color: var(--color-hero-black);
-		background-image: repeating-linear-gradient(
-			-45deg,
-			transparent,
-			transparent 5px,
-			var(--color-hero-yellow) 5px,
-			var(--color-hero-yellow) 6px
-		);
-		opacity: 0;
-		transition: opacity 0.2s ease-out;
-		pointer-events: none;
-	}
-
 	.trading-card:focus-visible {
 		outline: 4px solid var(--color-hero-yellow);
 		outline-offset: 6px;
@@ -193,17 +195,16 @@
 
 	@media (hover: hover) {
 		.trading-card:hover {
-			transform: translateY(-2px) scale(1.01);
+			transform: scale(1.02) rotate(0deg);
 			z-index: 10;
-		}
-
-		.trading-card:hover::before {
-			opacity: 1;
+			box-shadow: 10px 10px 0px var(--color-hero-black);
 		}
 	}
 
 	.trading-card.expanded {
+		transform: scale(1.02) rotate(0deg);
 		z-index: 15;
+		box-shadow: 12px 12px 0px var(--color-hero-red);
 	}
 
 	.card-content {
@@ -211,6 +212,7 @@
 		flex-direction: column;
 		position: relative;
 		z-index: 1;
+		animation: card-enter 1s ease-out both;
 		border: 2px solid var(--color-hero-black);
 		background: var(--color-hero-white);
 		background-image: linear-gradient(
@@ -325,14 +327,25 @@
 
 	.rating-value {
 		position: relative;
-		font-family: var(--font-heading);
-		font-size: 1.6rem;
+		display: inline-block;
+		font-family: var(--font-rating);
+		font-style: italic;
+		font-size: 1.55rem;
+		font-weight: 800;
+		line-height: 1;
+		letter-spacing: -0.01em;
 		color: var(--color-hero-black);
+		text-shadow:
+			1px 0 var(--color-hero-white),
+			-1px 0 var(--color-hero-white),
+			0 1px var(--color-hero-white),
+			0 -1px var(--color-hero-white);
 		z-index: 2;
 	}
 
 	.rating-starburst.multi-digit .rating-value {
-		font-size: 1.25rem;
+		font-size: 1.2rem;
+		letter-spacing: -0.02em;
 	}
 
 	.card-body {
@@ -473,7 +486,7 @@
 		}
 
 		.rating-starburst.multi-digit .rating-value {
-			font-size: 1.1rem;
+			font-size: 1.05rem;
 		}
 
 		.image-wrapper {
@@ -521,7 +534,7 @@
 		}
 
 		.rating-starburst.multi-digit .rating-value {
-			font-size: 0.95rem;
+			font-size: 0.92rem;
 		}
 
 		.excerpt {
@@ -533,7 +546,6 @@
 		.trading-card,
 		.excerpt-accordion,
 		.excerpt-accordion.open,
-		.trading-card::before,
 		.expand-prompt,
 		.rating-starburst {
 			transition: none;

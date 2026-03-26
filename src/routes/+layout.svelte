@@ -19,6 +19,7 @@
 		--comic-border: 4px solid var(--color-hero-black);
 		--comic-shadow: 6px 6px 0px var(--color-hero-black);
 		--font-heading: "Bangers", system-ui, sans-serif;
+		--font-rating: "Fira Sans Extra Condensed", var(--font-body);
 		--font-body: "Inter", system-ui, sans-serif;
 		--font-comic-text: var(--font-body);
 	}

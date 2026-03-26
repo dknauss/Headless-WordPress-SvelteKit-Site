@@ -326,10 +326,10 @@ import { decrementRating, incrementRating } from '$lib/rating';
 
 	.rating-starburst {
 		position: absolute;
-		top: -18px;
-		right: -18px;
-		width: 88px;
-		height: 88px;
+		top: -20px;
+		right: -20px;
+		width: 65px;
+		height: 65px;
 		padding: 0;
 		background: transparent;
 		border: 0;
@@ -368,14 +368,14 @@ import { decrementRating, incrementRating } from '$lib/rating';
 		font-family: var(--font-rating);
 		font-style: italic;
 		font-weight: 800;
-		font-size: 2rem;
+		font-size: 1.55rem;
 		line-height: 1;
 		color: var(--color-hero-black);
 		text-shadow: 1px 1px 0 var(--color-hero-white), -1px -1px 0 rgba(255, 255, 255, 0.4);
 	}
 
 	.rating-starburst.multi-digit .rating-value {
-		font-size: 1.6rem;
+		font-size: 1.2rem;
 	}
 
 	.card-body {

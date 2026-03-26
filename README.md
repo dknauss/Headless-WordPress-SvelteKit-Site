@@ -2,7 +2,7 @@
 
 ![Screenshot from the Edmonton WordPress Meetup headless WordPress workshop recap](static/images/meetup-headless-workshop.png)
 
-This is a fork of [Clem Omotosho’s headless WordPress workshop repo](https://github.com/clementm8/Headless-WordPress-SvelteKit-Site), a **hands-on tutorial project for the Edmonton WordPress Meetup**.
+This is a fork of [Clem Omotosho’s headless WordPress workshop repo](https://github.com/clementm8/Headless-WordPress-SvelteKit-Site), a **hands-on tutorial project for the [Edmonton WordPress Meetup](https://wpyeg.org/)**.
 
 The upstream repo and this fork are intended for:
 - YEG meetup attendees following along with the workshop series.
@@ -70,8 +70,8 @@ For this demo/tutorial, that tradeoff keeps the architecture easier to reason ab
 
 If you are coming from the meetup or starting fresh, this is the suggested path:
 
-1. **Read the meetup recap** to understand what “headless” means in practical WordPress terms.
-2. **Work through Clem’s tutorial** to understand the original workshop flow:
+1. **[Read the meetup recap](https://wpyeg.org/2026/02/26/what-is-headless-wordpress-jan-feb-workshop-recap-whats-next-at-the-yeg-wp-meetup/)** to understand what “headless” means in practical WordPress terms.
+2. **[Work through Clem’s tutorial](https://amazing-questions-440483.framer.app/)** to understand the original workshop flow:
    - intro to headless
    - WordPress + WPGraphQL
    - setting up SvelteKit
@@ -197,7 +197,7 @@ Original workshop/tutorial concept and repo inspiration:
 - [Clem Omotosho](https://github.com/clementm8/)
 
 Meetup context and writeup:
-- [Edmonton WordPress Meetup / WP YEG](https://wpyeg.org)
+- [Edmonton WordPress Meetup / WP YEG](https://wpyeg.org) blog: "[What is headless WordPress?](https://wpyeg.org/2026/02/26/what-is-headless-wordpress-jan-feb-workshop-recap-whats-next-at-the-yeg-wp-meetup/)"
 
 ## Fork note
 

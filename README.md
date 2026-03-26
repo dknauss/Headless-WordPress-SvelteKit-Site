@@ -1,6 +1,6 @@
 # Headless WordPress + SvelteKit Workshop Project for the Edmonton WordPress Meetup
 
-![Screenshot from the Edmonton WordPress Meetup headless WordPress workshop recap](https://wpyeg.org/wp-content/uploads/2026/02/Screenshot-2026-02-25-at-10.31.39-PM.png)
+![Screenshot from the Edmonton WordPress Meetup headless WordPress workshop recap](static/images/meetup-headless-workshop.png)
 
 This is a fork of [Clem Omotosho’s headless WordPress workshop repo](https://github.com/clementm8/Headless-WordPress-SvelteKit-Site), a **hands-on tutorial project for the Edmonton WordPress Meetup**.
 

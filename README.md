@@ -2,36 +2,36 @@
 
 ![Screenshot from the Edmonton WordPress Meetup headless WordPress workshop recap](https://wpyeg.org/wp-content/uploads/2026/02/Screenshot-2026-02-25-at-10.31.39-PM.png)
 
-A fork of Clem Omotosho’s headless WordPress workshop repo, adapted as a **hands-on tutorial project for the Edmonton WordPress Meetup**.
+This is a fork of [Clem Omotosho’s headless WordPress workshop repo](https://github.com/clementm8/Headless-WordPress-SvelteKit-Site), a **hands-on tutorial project for the Edmonton WordPress Meetup**.
 
-This version is designed for:
-- meetup attendees following along with the workshop series
-- students learning modern WordPress development
-- developers curious about **headless / decoupled WordPress** with **SvelteKit**, **WPGraphQL**, and a local WordPress install
+The upstream repo and this fork are intended for:
+- YEG meetup attendees following along with the workshop series.
+- Students learning modern WordPress development.
+- Developers curious about **headless / decoupled WordPress** with **SvelteKit**, **WPGraphQL**, and a local WordPress install.
 
-## Why this fork exists
+## Getting Started
 
-At the Edmonton WordPress Meetup, Clem Omotosho led a workshop series on building a decoupled WordPress application with a SvelteKit front end. This fork keeps that workshop spirit, but extends the project into a more polished tutorial/demo app.
+[Clem's tutorial](https://amazing-questions-440483.framer.app/) provides the 5-step workshop path to create your own working version of the original demo site in his repo. You should work through the tutorial in your local development environment first. Then, if you want to share any changes you make, create a fork and make a pull request to Clem's upstream source. (You could also do that with this downstream repo if you prefer.) Since this is a purely educational project, please document your work excessively, explain what you've learned, and ask any questions you have. :-)
 
-In this fork, WordPress stays the **read-only content source**, while SvelteKit handles the front-end experience and interactive features.
+### What's unique to this fork?
 
-## Workshop context
+I wanted to add a live rating interaction and originally did that in a very crude way that is insecure and not likely to do well under any kind of load: direct GraphQL mutations to WordPress `postmeta`. Later, this was modified so that read and write actions happened through the Svelte back end — more secure but also slowing down an already non-optimized demo. Finally, in this fork, WordPress remains entirely a read-only content source, while SvelteKit handles the front-end experience and interactive features by storing the changing rating figures per card in its own SQLite database. 
 
-This repo is inspired by:
-- the Edmonton WordPress Meetup recap: [What Is Headless WordPress? Jan-Feb Workshop Recap & What’s Next at the YEG WP Meetup](https://wpyeg.org/2026/02/26/what-is-headless-wordpress-jan-feb-workshop-recap-whats-next-at-the-yeg-wp-meetup/)
-- Clem Omotosho’s tutorial: [Building a Headless Application with WordPress and SvelteKit](https://amazing-questions-440483.framer.app/)
+- Added live rating interactions and expanded/modified visual feedback. (See [`/docs/decisions/ratings-storage.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/decisions/ratings-storage.md).)
+- Replaced the "Click Me" button and card descriptive content that it rolls out in favour of clicking through to an individual card page.
+  - Added a second page template for individual cards.
+- Basic SEO framework and enhancements. (See [`/docs/seo/roadmap.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/seo/roadmap.md).) 
+- Basic Accessibility enhancements. (See [`/docs/accessibility/accessibility-changes.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/accessibility/accessibility-changes.md) and [`manual-qa-checklist.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/accessibility/manual-qa-checklist.md).
 
-The meetup recap explains the big-picture goal well: WordPress keeps doing content management, while a separate front end handles presentation. Clem’s tutorial provides the original 5-step workshop path.
+### What you get here
 
-## What you build here
+Clem's original Marvel-themed trading-card collection app where:
+- **WordPress** stores the card content. (Sole content source)
+- **WPGraphQL** exposes that content to the front end. (API layer for reading posts/card data from WordPress.)
+- **SvelteKit** renders the collection and card detail pages. (Runtime JS front-end app, routes, UI, metadata, rating API)
+- **SQLite** stores local demo-only ratings in the SvelteKit app. (Local ratings/vote storage at `.data/ratings.sqlite`)
 
-A Marvel-themed trading-card collection app where:
-- **WordPress** stores the card content
-- **WPGraphQL** exposes that content to the front end
-- **SvelteKit** renders the collection and card detail pages
-- **SQLite** stores local demo-only ratings in the SvelteKit app
-
-## What this fork adds beyond the original workshop repo
+### What this fork adds beyond the original workshop repo
 
 This fork goes beyond the initial workshop scaffold with:
 - server-rendered card detail pages
@@ -45,29 +45,22 @@ This fork goes beyond the initial workshop scaffold with:
 - improved image loading and caching for the card grid
 - a safer architecture that keeps WordPress read-only
 
-## Architecture at a glance
-
-- **WordPress**: content source only
-- **WPGraphQL**: API layer for reading posts/card data
-- **SvelteKit**: front-end app, routes, UI, metadata, rating API
-- **SQLite**: local ratings/vote storage at `.data/ratings.sqlite`
-
 ## Why keep WordPress read-only?
 
 For this demo/tutorial, that tradeoff keeps the architecture easier to reason about.
 
-Benefits:
+**Benefits:**
 - no public anonymous write endpoint on WordPress
 - no mu-plugin required for ratings
 - easier experimentation in SvelteKit
 - clearer separation between content management and front-end interaction
 
-Tradeoffs:
+**Tradeoffs:**
 - ratings are local to the SvelteKit app instance
 - SQLite is best for simple local or low-traffic single-instance deployments
 - if this grew into a larger production system, Postgres would be a better next step
 
-See:
+**See:**
 - [docs/decisions/ratings-storage.md](docs/decisions/ratings-storage.md)
 - [docs/seo/roadmap.md](docs/seo/roadmap.md)
 
@@ -83,6 +76,7 @@ If you are coming from the meetup or starting fresh, this is the suggested path:
    - building the UI
    - building the data layer
 3. **Use this fork** to study how the project can be extended safely and incrementally.
+4. **Create your own fork** — this is not a private learning exercise: anyone can join. :-) 
 
 ## Local setup
 
@@ -160,31 +154,30 @@ npm run ratings:reset
 If you are learning from this repo, these are good entry points:
 
 ### WordPress data access
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/lib/server/wp.ts`
+- `/src/lib/server/wp.ts`
 
 ### SEO helpers
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/lib/server/seo.ts`
+- `/src/lib/server/seo.ts`
 
 ### Ratings architecture
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/lib/server/ratings.ts`
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/routes/api/rating/+server.ts`
+- `/src/lib/server/ratings.ts`
+- `/src/routes/api/rating/+server.ts`
 
 ### Card UI
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/components/Card.svelte`
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/components/CardRow.svelte`
+- `/src/components/Card.svelte`
+- `/src/components/CardRow.svelte`
 
 ### Card detail pages
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/routes/cards/[slug]/+page.server.ts`
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/routes/cards/[slug]/+page.svelte`
+- `/src/routes/cards/[slug]/+page.server.ts`
+- `/src/routes/cards/[slug]/+page.svelte`
 
 ## Good workshop discussion questions
 
-If you are using this for meetup discussion or study, here are some useful questions to explore:
 - When is headless WordPress actually worth the complexity?
 - When should WordPress remain monolithic instead?
 - What belongs in WordPress vs. the front end?
 - How do SEO, accessibility, and performance responsibilities change in a decoupled setup?
-- When is a local SQLite-backed feature “good enough,” and when should it move to shared infrastructure?
+- When is a feature or architectural choice like the local SQLite rating store “good enough,” and when should it move to shared infrastructure with the CMS?
 
 ## Contributing
 
@@ -199,10 +192,10 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Upstream credit
 
 Original workshop/tutorial concept and repo inspiration:
-- Clem Omotosho
+- [Clem Omotosho](https://github.com/clementm8/)
 
 Meetup context and writeup:
-- Edmonton WordPress Meetup / WP YEG
+- [Edmonton WordPress Meetup / WP YEG](https://wpyeg.org)
 
 ## Fork note
 

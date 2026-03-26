@@ -1,3 +1,19 @@
+export interface CardImageSize {
+	name: string;
+	sourceUrl: string;
+	width?: string;
+	height?: string;
+}
+
+export interface CardImageNode {
+	sourceUrl: string;
+	mediaDetails?: {
+		width?: number;
+		height?: number;
+		sizes?: CardImageSize[];
+	};
+}
+
 export interface Card {
 	id: string;
 	title: string;
@@ -8,9 +24,7 @@ export interface Card {
 	rating?: number;
 	viewerHasVoted?: boolean;
 	featuredImage?: {
-		node?: {
-			sourceUrl: string;
-		};
+		node?: CardImageNode;
 	};
 	categories?: {
 		nodes?: Array<{

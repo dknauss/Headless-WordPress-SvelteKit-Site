@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { CARD_DETAIL_IMAGE_SIZES, getResponsiveImage } from '$lib/image';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
 
 	$: card = data.card;
 	$: seo = data.seo;
+	$: imageAsset = getResponsiveImage(card.featuredImage?.node);
 	$: categoryNames = card.categories?.nodes?.map((category) => category.name) || [];
 	$: bodyHtml = card.content || '';
 	$: publishedDate = card.date ? new Date(card.date).toLocaleDateString() : '';
@@ -36,8 +38,8 @@
 	<article class="card-detail">
 		<div class="detail-hero">
 			<div class="detail-image-frame">
-				{#if card.featuredImage?.node?.sourceUrl}
-					<img src={card.featuredImage.node.sourceUrl} alt={card.title} loading="eager" decoding="async" />
+				{#if imageAsset?.src}
+					<img src={imageAsset.src} srcset={imageAsset.srcSet} sizes={CARD_DETAIL_IMAGE_SIZES} width={imageAsset.width} height={imageAsset.height} alt={card.title} loading="eager" fetchpriority="high" decoding="async" />
 				{:else}
 					<div class="no-image">NO HERO DATA</div>
 				{/if}

@@ -1,9 +1,14 @@
 <script lang="ts">
-	import { decrementRating, incrementRating } from '$lib/rating';
+	import { createEventDispatcher, onMount } from 'svelte';
+	import { getResponsiveImage, CARD_GRID_IMAGE_SIZES } from '$lib/image';
+import { decrementRating, incrementRating } from '$lib/rating';
 	import type { Card } from '$lib/types';
 
 	export let card: Card;
 	export let index = 0;
+	export let revealed = true;
+
+	const dispatch = createEventDispatcher<{ imageready: void }>();
 
 	function getRestRotation(seed: string) {
 		let hash = 0;
@@ -30,16 +35,49 @@
 
 	let hasVoted = card.viewerHasVoted ?? false;
 	let isVoting = false;
+	let imageLoaded = !card.featuredImage?.node?.sourceUrl;
+	let imageEl: HTMLImageElement | null = null;
+	let hasReportedImageReady = false;
 
 	$: if (!isVoting) {
 		hasVoted = card.viewerHasVoted ?? false;
 	}
+	$: imageAsset = getResponsiveImage(card.featuredImage?.node);
+	$: imageLoaded = !imageAsset?.src || imageLoaded;
 	$: restRotation = getRestRotation(card.id || card.slug || card.title || String(index));
 	$: ratingText = String(card.rating ?? 0);
 	$: isMultiDigitRating = ratingText.length > 1;
 	$: cardDomId = toDomId(card.id || card.slug || card.title || `card-${index}`);
 	$: ratingStatusId = `card-rating-status-${cardDomId}`;
 	$: detailUrl = card.slug ? `/cards/${card.slug}` : '';
+	$: imageLoading = (index < 6 ? 'eager' : 'lazy') as 'eager' | 'lazy';
+	$: imageFetchPriority = (index < 2 ? 'high' : 'auto') as 'high' | 'auto';
+
+	function reportImageReady() {
+		if (hasReportedImageReady) {
+			return;
+		}
+
+		hasReportedImageReady = true;
+		dispatch('imageready');
+	}
+
+	function handleImageReady() {
+		imageLoaded = true;
+		reportImageReady();
+	}
+
+	onMount(() => {
+		if (!imageAsset?.src) {
+			reportImageReady();
+			return;
+		}
+
+		if (imageEl?.complete) {
+			imageLoaded = true;
+			reportImageReady();
+		}
+	});
 
 	async function handleRatingClick(event: MouseEvent) {
 		event.stopPropagation();
@@ -80,7 +118,13 @@
 	}
 </script>
 
-<article class="trading-card-shell" style:animation-delay={`${index * 80}ms`} style:--rest-rotation={`${restRotation}deg`}>
+<article
+	class="trading-card-shell"
+	class:revealed={revealed}
+	class:image-loaded={imageLoaded}
+	style:animation-delay={`${index * 80}ms`}
+	style:--rest-rotation={`${restRotation}deg`}
+>
 	<button
 		class="rating-starburst"
 		class:voted={hasVoted}
@@ -108,9 +152,23 @@
 	</span>
 
 	<div class="card-content">
-		<div class="image-wrapper">
-			{#if card.featuredImage?.node?.sourceUrl}
-				<img src={card.featuredImage.node.sourceUrl} alt={card.title} loading="lazy" decoding="async" />
+		<div class="image-wrapper" class:image-loaded={imageLoaded}>
+			{#if imageAsset?.src}
+				<img
+					bind:this={imageEl}
+					class:image-visible={imageLoaded}
+					src={imageAsset.src}
+					srcset={imageAsset.srcSet}
+					sizes={CARD_GRID_IMAGE_SIZES}
+					width={imageAsset.width}
+					height={imageAsset.height}
+					alt={card.title}
+					loading={imageLoading}
+					fetchpriority={imageFetchPriority}
+					decoding="async"
+					on:load={handleImageReady}
+					on:error={handleImageReady}
+				/>
 			{:else}
 				<div class="no-image">NO HERO DATA</div>
 			{/if}
@@ -134,6 +192,7 @@
 
 <style>
 	.trading-card-shell {
+		display: none;
 		background: transparent;
 		border: none;
 		transition:
@@ -145,6 +204,10 @@
 		box-shadow: var(--comic-shadow);
 		transform: rotate(var(--rest-rotation, 0deg));
 		transform-origin: center center;
+	}
+
+	.trading-card-shell.revealed {
+		display: block;
 	}
 
 	@keyframes card-enter {
@@ -159,7 +222,7 @@
 	}
 
 	@media (hover: hover) {
-		.trading-card-shell:hover {
+		.trading-card-shell.revealed:hover {
 			transform: scale(1.02) rotate(0deg);
 			z-index: 10;
 			box-shadow: 10px 10px 0px var(--color-hero-black);
@@ -171,7 +234,7 @@
 		flex-direction: column;
 		position: relative;
 		z-index: 1;
-		animation: card-enter 1s ease-out both;
+		animation: card-enter 0.55s cubic-bezier(0.2, 0.9, 0.2, 1) both;
 		border: 2px solid var(--color-hero-black);
 		background: var(--color-hero-white);
 		background-image: linear-gradient(
@@ -189,10 +252,43 @@
 
 	.image-wrapper {
 		aspect-ratio: 3 / 4;
-		background-color: var(--color-hero-blue);
 		overflow: hidden;
 		border-bottom: var(--comic-border);
 		position: relative;
+		background-color: #e8eefc;
+		background-image:
+			radial-gradient(circle at 1px 1px, rgba(37, 99, 235, 0.28) 1px, transparent 0),
+			linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(37, 99, 235, 0.08));
+		background-size: 12px 12px, 100% 100%;
+	}
+
+	.image-wrapper::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			110deg,
+			rgba(255, 255, 255, 0) 25%,
+			rgba(255, 255, 255, 0.5) 50%,
+			rgba(255, 255, 255, 0) 75%
+		);
+		background-size: 200% 100%;
+		animation: image-shimmer 1.4s linear infinite;
+		opacity: 1;
+		transition: opacity 0.2s ease-out;
+	}
+
+	.image-wrapper.image-loaded::before {
+		opacity: 0;
+	}
+
+	@keyframes image-shimmer {
+		from {
+			background-position: 200% 0;
+		}
+		to {
+			background-position: -200% 0;
+		}
 	}
 
 	img {
@@ -200,6 +296,19 @@
 		height: 100%;
 		display: block;
 		object-fit: cover;
+		opacity: 0;
+		transform: scale(1.035);
+		transition:
+			opacity 0.22s ease-out,
+			transform 0.36s ease-out,
+			filter 0.22s ease-out;
+		filter: saturate(0.88);
+	}
+
+	img.image-visible {
+		opacity: 1;
+		transform: scale(1);
+		filter: saturate(1);
 	}
 
 	.no-image {
@@ -212,6 +321,7 @@
 		font-family: var(--font-heading);
 		font-size: clamp(1.5rem, 3vw, 2rem);
 		color: var(--color-hero-white);
+		background: var(--color-hero-blue);
 	}
 
 	.rating-starburst {
@@ -366,8 +476,11 @@
 	@media (prefers-reduced-motion: reduce) {
 		.trading-card-shell,
 		.rating-starburst,
-		.detail-link {
+		.detail-link,
+		img,
+		.image-wrapper::before {
 			transition: none;
+			animation: none;
 		}
 
 		.starburst-svg,

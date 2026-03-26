@@ -32,6 +32,7 @@ See [docs/decisions/ratings-storage.md](docs/decisions/ratings-storage.md) for t
 Copy `.env.example` to `.env` and adjust values as needed.
 
 - `WP_GRAPHQL_URL`: WordPress GraphQL endpoint used by the SvelteKit server
+- `PUBLIC_SITE_URL`: canonical public site URL used for metadata, sitemap, and robots output
 - `SESSION_SECRET`: secret used to sign the session cookie in production
 - `RATING_RATE_LIMIT_MAX_ATTEMPTS`: max rating actions allowed per window
 - `RATING_RATE_LIMIT_WINDOW_MS`: rate-limit window in milliseconds

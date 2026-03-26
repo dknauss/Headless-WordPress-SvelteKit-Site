@@ -17,11 +17,11 @@ The upstream repo and this fork are intended for:
 
 I wanted to add a live rating interaction and originally did that in a very crude way that is insecure and not likely to do well under any kind of load: direct GraphQL mutations to WordPress `postmeta`. Later, this was modified so that read and write actions happened through the Svelte back end — more secure but also slowing down an already non-optimized demo. Finally, in this fork, WordPress remains entirely a read-only content source, while SvelteKit handles the front-end experience and interactive features by storing the changing rating figures per card in its own SQLite database. 
 
-- Added live rating interactions and expanded/modified visual feedback. (See [`/docs/decisions/ratings-storage.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/decisions/ratings-storage.md).)
+- Added live rating interactions and expanded/modified visual feedback to the **UI**. (See [`/docs/decisions/ratings-storage.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/decisions/ratings-storage.md).)
 - Replaced the "Click Me" button and card descriptive content that it rolls out in favour of clicking through to an individual card page.
-  - Added a second page template for individual cards.
-- Basic SEO framework and enhancements. (See [`/docs/seo/roadmap.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/seo/roadmap.md).) 
-- Basic Accessibility enhancements. (See [`/docs/accessibility/accessibility-changes.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/accessibility/accessibility-changes.md) and [`manual-qa-checklist.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/accessibility/manual-qa-checklist.md).
+  - Added a second page template for individual cards. (Better **UX** and **SEO**)
+- Basic **SEO** framework and enhancements. (See [`/docs/seo/roadmap.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/seo/roadmap.md).) 
+- Basic **Accessibility** enhancements. (See [`/docs/accessibility/accessibility-changes.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/accessibility/accessibility-changes.md) and [`manual-qa-checklist.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/accessibility/manual-qa-checklist.md).)
 
 ### What you get here
 

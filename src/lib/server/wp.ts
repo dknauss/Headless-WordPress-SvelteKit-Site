@@ -1,7 +1,7 @@
 import { dev } from '$app/environment';
 import { env as privateEnv } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';
-import type { CardsResponse } from '$lib/types';
+import type { Card, CardsResponse, SingleCardResponse } from '$lib/types';
 
 const DEFAULT_WP_GRAPHQL_URL = 'http://127.0.0.1:8882/graphql/';
 const LOCAL_WP_GRAPHQL_FALLBACKS = [
@@ -12,27 +12,44 @@ const LOCAL_WP_GRAPHQL_FALLBACKS = [
 	'http://localhost:8887/graphql/'
 ];
 
+const CARD_SUMMARY_FIELDS = `
+	id
+	title
+	slug
+	excerpt
+	date
+	featuredImage {
+		node {
+			sourceUrl
+		}
+	}
+	categories {
+		nodes {
+			name
+			slug
+		}
+	}
+`;
+
+const CARD_DETAIL_FIELDS = `
+	${CARD_SUMMARY_FIELDS}
+	content
+`;
+
 const GET_CARDS = `
 	query GetCards {
 		posts {
 			nodes {
-				id
-				title
-				slug
-				excerpt
-				date
-				featuredImage {
-					node {
-						sourceUrl
-					}
-				}
-				categories {
-					nodes {
-						name
-						slug
-					}
-				}
+				${CARD_SUMMARY_FIELDS}
 			}
+		}
+	}
+`;
+
+const GET_CARD_BY_SLUG = `
+	query GetCardBySlug($slug: ID!) {
+		post(id: $slug, idType: SLUG) {
+			${CARD_DETAIL_FIELDS}
 		}
 	}
 `;
@@ -117,11 +134,14 @@ async function fetchGraphQL<T>(
 		}
 	}
 
-	throw new Error(
-		`Unable to reach WordPress GraphQL. Tried: ${failures.join(' | ')}`
-	);
+	throw new Error(`Unable to reach WordPress GraphQL. Tried: ${failures.join(' | ')}`);
 }
 
 export async function getCards(fetchFn?: FetchLike): Promise<CardsResponse> {
 	return fetchGraphQL<CardsResponse>(GET_CARDS, {}, fetchFn);
+}
+
+export async function getCardBySlug(slug: string, fetchFn?: FetchLike): Promise<Card | null> {
+	const result = await fetchGraphQL<SingleCardResponse>(GET_CARD_BY_SLUG, { slug }, fetchFn);
+	return result.post ?? null;
 }

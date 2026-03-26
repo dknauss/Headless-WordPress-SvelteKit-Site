@@ -1,13 +1,9 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import { decrementRating, incrementRating } from '$lib/rating';
 	import type { Card } from '$lib/types';
 
 	export let card: Card;
-	export let expanded = false;
 	export let index = 0;
-
-	const dispatch = createEventDispatcher();
 
 	function getRestRotation(seed: string) {
 		let hash = 0;
@@ -42,13 +38,8 @@
 	$: ratingText = String(card.rating ?? 0);
 	$: isMultiDigitRating = ratingText.length > 1;
 	$: cardDomId = toDomId(card.id || card.slug || card.title || `card-${index}`);
-	$: titleId = `card-title-${cardDomId}`;
-	$: detailsId = `card-details-${cardDomId}`;
 	$: ratingStatusId = `card-rating-status-${cardDomId}`;
-
-	function toggleExpand() {
-		dispatch('toggle');
-	}
+	$: detailUrl = card.slug ? `/cards/${card.slug}` : '';
 
 	async function handleRatingClick(event: MouseEvent) {
 		event.stopPropagation();
@@ -89,12 +80,7 @@
 	}
 </script>
 
-<article
-	class="trading-card-shell"
-	class:expanded={expanded}
-	style:animation-delay={`${index * 80}ms`}
-	style:--rest-rotation={`${restRotation}deg`}
->
+<article class="trading-card-shell" style:animation-delay={`${index * 80}ms`} style:--rest-rotation={`${restRotation}deg`}>
 	<button
 		class="rating-starburst"
 		class:voted={hasVoted}
@@ -122,46 +108,27 @@
 	</span>
 
 	<div class="card-content">
-		<button
-			class="card-toggle"
-			type="button"
-			aria-expanded={expanded}
-			aria-controls={detailsId}
-			on:click={toggleExpand}
-		>
-			<div class="image-wrapper">
-				{#if card.featuredImage?.node?.sourceUrl}
-					<img src={card.featuredImage.node.sourceUrl} alt={card.title} loading="lazy" decoding="async" />
-				{:else}
-					<div class="no-image">NO HERO DATA</div>
+		<div class="image-wrapper">
+			{#if card.featuredImage?.node?.sourceUrl}
+				<img src={card.featuredImage.node.sourceUrl} alt={card.title} loading="lazy" decoding="async" />
+			{:else}
+				<div class="no-image">NO HERO DATA</div>
+			{/if}
+		</div>
+
+		<div class="card-body">
+			<h2>{card.title}</h2>
+
+			<div class="card-meta">
+				{#if card.categories?.nodes?.length}
+					<span class="card-set">{card.categories.nodes[0].name}</span>
+				{/if}
+
+				{#if detailUrl}
+					<a class="detail-link" href={detailUrl}>View Card</a>
 				{/if}
 			</div>
-
-			<div class="card-body">
-				<h2 id={titleId}>{card.title}</h2>
-
-				<div class="card-meta">
-					{#if card.categories?.nodes?.length}
-						<span class="card-set">
-							{card.categories.nodes[0].name}
-						</span>
-					{/if}
-
-					<div class="expand-prompt" class:hidden={expanded} aria-hidden={expanded}>
-						<span class="expand-prompt-desktop">CLICK ME</span>
-						<span class="expand-prompt-mobile">TAP ME</span>
-					</div>
-				</div>
-			</div>
-		</button>
-
-		{#if expanded}
-			<div class="excerpt-accordion open" id={detailsId} role="region" aria-labelledby={titleId}>
-				<div class="excerpt-content">
-					<div class="excerpt">{@html card.excerpt}</div>
-				</div>
-			</div>
-		{/if}
+		</div>
 	</div>
 </article>
 
@@ -199,12 +166,6 @@
 		}
 	}
 
-	.trading-card-shell.expanded {
-		transform: scale(1.02) rotate(0deg);
-		z-index: 15;
-		box-shadow: 12px 12px 0px var(--color-hero-red);
-	}
-
 	.card-content {
 		display: flex;
 		flex-direction: column;
@@ -226,27 +187,6 @@
 		background-size: 4px 4px;
 	}
 
-	.trading-card-shell.expanded .card-content {
-		border-color: var(--color-hero-red);
-	}
-
-	.card-toggle {
-		display: block;
-		width: 100%;
-		padding: 0;
-		border: 0;
-		background: transparent;
-		color: inherit;
-		text-align: left;
-		cursor: pointer;
-	}
-
-	.card-toggle:focus-visible,
-	.rating-starburst:focus-visible {
-		outline: 4px solid var(--color-hero-yellow);
-		outline-offset: 6px;
-	}
-
 	.image-wrapper {
 		aspect-ratio: 3 / 4;
 		background-color: var(--color-hero-blue);
@@ -258,108 +198,81 @@
 	img {
 		width: 100%;
 		height: 100%;
+		display: block;
 		object-fit: cover;
-		filter: contrast(1.1) brightness(1.05);
-		will-change: transform;
 	}
 
 	.no-image {
+		display: grid;
+		place-items: center;
+		width: 100%;
 		height: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--color-hero-white);
+		padding: 1rem;
+		text-align: center;
 		font-family: var(--font-heading);
-		font-size: 1.5rem;
-		text-shadow: 2px 2px 0 #000;
+		font-size: clamp(1.5rem, 3vw, 2rem);
+		color: var(--color-hero-white);
 	}
 
 	.rating-starburst {
 		position: absolute;
-		top: -20px;
-		right: -20px;
-		width: 65px;
-		height: 65px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		filter: drop-shadow(3px 3px 0px black);
-		z-index: 20;
+		top: -18px;
+		right: -18px;
+		width: 88px;
+		height: 88px;
+		padding: 0;
 		background: transparent;
 		border: 0;
-		padding: 0;
 		cursor: pointer;
-		transition:
-			transform 0.2s ease-out,
-			filter 0.2s ease-out,
-			opacity 0.2s ease-out;
+		z-index: 3;
+		transition: transform 0.18s ease-out;
+	}
+
+	.rating-starburst:disabled {
+		cursor: wait;
+		opacity: 0.85;
+	}
+
+	.rating-starburst:focus-visible,
+	.detail-link:focus-visible {
+		outline: 4px solid var(--color-hero-yellow);
+		outline-offset: 4px;
 	}
 
 	.rating-starburst:hover:not(:disabled) {
 		transform: scale(1.04) rotate(-8deg);
 	}
 
-	.rating-starburst:active:not(:disabled) {
-		transform: scale(0.98);
-	}
-
-	.rating-starburst.voted {
-		filter: drop-shadow(3px 3px 0px var(--color-hero-black));
-	}
-
-	.rating-starburst.voting {
-		opacity: 0.75;
-	}
-
-	.rating-starburst:disabled {
-		cursor: progress;
-	}
-
 	.starburst-svg {
-		position: absolute;
 		width: 100%;
 		height: 100%;
-		animation: spin 10s linear infinite;
-	}
-
-	@keyframes spin {
-		from {
-			transform: rotate(0deg);
-		}
-		to {
-			transform: rotate(360deg);
-		}
+		display: block;
+		filter: drop-shadow(2px 2px 0 var(--color-hero-black));
 	}
 
 	.rating-value {
-		position: relative;
-		display: inline-block;
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
 		font-family: var(--font-rating);
 		font-style: italic;
-		font-size: 1.55rem;
 		font-weight: 800;
+		font-size: 2rem;
 		line-height: 1;
-		letter-spacing: -0.01em;
 		color: var(--color-hero-black);
-		text-shadow:
-			1px 0 var(--color-hero-white),
-			-1px 0 var(--color-hero-white),
-			0 1px var(--color-hero-white),
-			0 -1px var(--color-hero-white);
-		z-index: 2;
+		text-shadow: 1px 1px 0 var(--color-hero-white), -1px -1px 0 rgba(255, 255, 255, 0.4);
 	}
 
 	.rating-starburst.multi-digit .rating-value {
-		font-size: 1.2rem;
-		letter-spacing: -0.02em;
+		font-size: 1.6rem;
 	}
 
 	.card-body {
-		padding: 1.2rem;
 		display: flex;
 		flex-direction: column;
-		gap: 0.8rem;
-		min-height: 10rem;
+		gap: 1rem;
+		padding: 1.2rem;
 		min-width: 220px;
 	}
 
@@ -367,101 +280,54 @@
 		margin: 0;
 		min-height: 65px;
 		font-size: 1.8rem;
-		line-height: 1;
-		color: var(--color-hero-red);
+		line-height: 0.95;
+		color: var(--color-hero-yellow);
 		-webkit-text-stroke: 1px black;
-		text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
+		text-shadow: 2px 2px 0 var(--color-hero-black);
 	}
 
 	.card-meta {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.5rem;
-		align-items: center;
 		justify-content: space-between;
+		align-items: center;
+		gap: 0.8rem;
 	}
 
 	.card-set {
-		display: inline-block;
-		font-size: 0.8rem;
-		font-weight: 700;
-		color: var(--color-hero-blue);
-		padding: 0.2rem 0.8rem;
-		border: 1px solid currentColor;
-		transform: skew(-10deg);
-	}
-
-	.excerpt-accordion {
-		display: grid;
-		grid-template-rows: 1fr;
-		overflow: hidden;
-	}
-
-	.excerpt-content {
-		min-height: 0;
-	}
-
-	.excerpt {
-		font-family: var(--font-comic-text);
-		font-size: 1.1rem;
-		color: #1a1a1a;
-		line-height: 1.5;
-		padding: 1rem 1.2rem 1.2rem;
-		border-top: 2px dashed #ccc;
-	}
-
-	.excerpt :global(p) {
-		margin: 0 0 1.2rem 0;
-	}
-
-	.excerpt :global(p:last-child) {
-		margin-bottom: 0;
-	}
-
-	.expand-prompt {
 		font-family: var(--font-heading);
-		font-size: 0.8rem;
-		font-weight: 700;
+		font-size: 1rem;
+		line-height: 1;
+		letter-spacing: 0.05em;
+		color: var(--color-hero-black);
+	}
+
+	.detail-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.45rem 0.95rem 0.35rem;
+		border: 3px dashed var(--color-hero-red);
+		background: rgba(239, 68, 68, 0.08);
+		color: var(--color-hero-red);
+		font-family: var(--font-heading);
+		font-size: 1rem;
+		letter-spacing: 0.05em;
+		text-decoration: none;
+		text-transform: uppercase;
+		line-height: 1;
+		transition:
+			color 0.2s ease-out,
+			background-color 0.2s ease-out,
+			border-color 0.2s ease-out,
+			transform 0.15s ease-out;
+	}
+
+	.detail-link:hover {
 		color: var(--color-hero-white);
-		background-color: var(--color-hero-blue);
-		text-align: center;
-		border: 2px solid #000;
-		padding: 0.2rem 0.6rem;
-		opacity: 1;
-		transition: opacity 0.3s ease-out;
-	}
-
-	.expand-prompt.hidden {
-		opacity: 0;
-		pointer-events: none;
-	}
-
-	.expand-prompt-mobile {
-		display: none;
-	}
-
-	@media (hover: hover) {
-		.trading-card-shell:hover .expand-prompt,
-		.card-toggle:focus-visible .expand-prompt {
-			color: var(--color-hero-red);
-			border-color: var(--color-hero-red);
-			background-color: rgba(239, 68, 68, 0.08);
-		}
-	}
-
-	@media (max-width: 1024px) {
-		.expand-prompt-desktop {
-			display: none;
-		}
-
-		.expand-prompt-mobile {
-			display: inline;
-		}
+		background-color: var(--color-hero-red);
+		border-color: var(--color-hero-red);
+		transform: translateY(-1px);
 	}
 
 	@media (max-width: 768px) {
@@ -470,44 +336,14 @@
 		}
 
 		.card-body {
-			padding: 1rem;
-			gap: 0.6rem;
-			height: fit-content;
-		}
-
-		.excerpt {
-			padding: 1rem;
+			min-width: 0;
 		}
 
 		.rating-starburst {
 			top: -14px;
 			right: -14px;
-			width: 55px;
-			height: 55px;
-		}
-
-		.rating-value {
-			font-size: 1.3rem;
-		}
-
-		.rating-starburst.multi-digit .rating-value {
-			font-size: 1.05rem;
-		}
-
-		.image-wrapper {
-			border-bottom-width: 2px;
-		}
-
-		img {
-			filter: none;
-		}
-
-		.rating-starburst {
-			filter: none;
-		}
-
-		.starburst-svg {
-			animation: none;
+			width: 76px;
+			height: 76px;
 		}
 	}
 
@@ -517,41 +353,20 @@
 			-webkit-text-stroke: 0.5px black;
 		}
 
-		.card-body {
-			padding: 0.8rem;
-			gap: 0.5rem;
-			height: fit-content;
+		.card-meta {
+			align-items: stretch;
+			flex-direction: column;
 		}
 
-		.no-image {
-			font-size: 1.2rem;
-		}
-
-		.rating-starburst {
-			top: -10px;
-			right: -10px;
-			width: 45px;
-			height: 45px;
-		}
-
-		.rating-value {
-			font-size: 1.1rem;
-		}
-
-		.rating-starburst.multi-digit .rating-value {
-			font-size: 0.92rem;
-		}
-
-		.excerpt {
-			font-size: 1rem;
-			padding: 0.8rem;
+		.detail-link {
+			width: 100%;
 		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {
 		.trading-card-shell,
-		.expand-prompt,
-		.rating-starburst {
+		.rating-starburst,
+		.detail-link {
 			transition: none;
 		}
 
@@ -561,8 +376,7 @@
 		}
 
 		.trading-card-shell,
-		.trading-card-shell:hover,
-		.trading-card-shell.expanded {
+		.trading-card-shell:hover {
 			transform: none;
 		}
 	}

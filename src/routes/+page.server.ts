@@ -1,8 +1,9 @@
+import { buildHomepageSeo } from '$lib/server/seo';
 import { ratingStore } from '$lib/server/ratings';
 import { getCards } from '$lib/server/wp';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ fetch, locals, setHeaders }) => {
+export const load: PageServerLoad = async ({ fetch, locals, setHeaders, url }) => {
 	setHeaders({
 		'cache-control': 'private, no-store'
 	});
@@ -19,12 +20,14 @@ export const load: PageServerLoad = async ({ fetch, locals, setHeaders }) => {
 
 		return {
 			cards,
-			error: ''
+			error: '',
+			seo: buildHomepageSeo(cards, url)
 		};
 	} catch (error) {
 		return {
 			cards: [],
-			error: error instanceof Error ? error.message : 'Failed to load cards'
+			error: error instanceof Error ? error.message : 'Failed to load cards',
+			seo: buildHomepageSeo([], url)
 		};
 	}
 };

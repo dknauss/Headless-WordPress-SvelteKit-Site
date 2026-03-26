@@ -12,6 +12,7 @@
 
 	$: cards = data.cards;
 	$: error = data.error;
+	$: seo = data.seo;
 	$: totalPages = Math.max(1, Math.ceil(cards.length / perPage));
 	$: paginatedCards = cards.slice(currentPage * perPage, (currentPage + 1) * perPage);
 	$: hasPrev = currentPage > 0;
@@ -30,7 +31,23 @@
 </script>
 
 <svelte:head>
-	<title>Trading Card Collection</title>
+	<title>{seo.title}</title>
+	<meta name="description" content={seo.description} />
+	<link rel="canonical" href={seo.canonical} />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content={seo.title} />
+	<meta property="og:description" content={seo.description} />
+	<meta property="og:url" content={seo.canonical} />
+	{#if seo.image}
+		<meta property="og:image" content={seo.image} />
+	{/if}
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={seo.title} />
+	<meta name="twitter:description" content={seo.description} />
+	{#if seo.image}
+		<meta name="twitter:image" content={seo.image} />
+	{/if}
+	<script type="application/ld+json">{seo.jsonLd}</script>
 </svelte:head>
 
 <main class="container">

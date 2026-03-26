@@ -3,31 +3,11 @@
 	import type { Card as CardType } from '$lib/types';
 
 	export let cards: CardType[];
-
-	let expandedIndex: number | null = null;
-	let rowEl: HTMLDivElement;
-
-	function handleToggle(index: number) {
-		expandedIndex = expandedIndex === index ? null : index;
-	}
-
-	function handleClickOutside(event: MouseEvent) {
-		if (expandedIndex !== null && rowEl && !rowEl.contains(event.target as Node)) {
-			expandedIndex = null;
-		}
-	}
 </script>
 
-<svelte:window on:click={handleClickOutside} />
-
-<div bind:this={rowEl} class="cards-row">
+<div class="cards-row">
 	{#each cards as card, i (card.id)}
-		<Card
-			{card}
-			expanded={expandedIndex === i}
-			index={i}
-			on:toggle={() => handleToggle(i)}
-		/>
+		<Card {card} index={i} />
 	{/each}
 </div>
 

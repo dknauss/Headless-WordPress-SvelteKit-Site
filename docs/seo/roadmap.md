@@ -235,6 +235,64 @@ Consider adding:
 
 ---
 
+## Pagination guidance
+
+Pagination pages are generally **fine**, not bad, but they should be treated as secondary SEO surfaces rather than primary targets.
+
+### Recommendation for this project
+
+Keep pagination for usability and collection browsing.
+
+However:
+- the homepage should remain the main collection landing page
+- individual card detail pages should remain the main SEO targets
+- paginated views should support discovery, not replace canonical entity pages
+
+### Risks
+
+Pagination becomes less useful for SEO when it creates:
+- many near-duplicate pages
+- weak metadata across deep pages
+- competition with stronger canonical pages
+
+### Rule of thumb
+
+> Pagination is good support structure, but it is not the primary SEO value in this project.
+
+## Taxonomy archive guidance
+
+Taxonomy archive pages are **not inherently bad for SEO**.
+
+They become risky when they are:
+- thin
+- near-duplicates
+- automatically generated with little unique value
+
+They become valuable when they have:
+- a unique URL
+- a clear purpose
+- a useful intro or summary
+- distinct metadata
+- a meaningful list of relevant cards
+- internal-linking value
+
+### Recommendation for this project
+
+Do **not** add category/taxonomy archive pages in Phase 1.
+
+Why:
+- the biggest win still comes from canonical card detail pages
+- taxonomy pages should only be added once they can provide real user and search value
+- otherwise they risk becoming thin archive pages with duplicative content
+
+### Category labels on cards
+
+For now, category labels on the homepage should remain non-link text unless and until real archive pages are implemented.
+
+### Rule of thumb
+
+> Taxonomy pages are good when curated; bad when automatic and thin.
+
 ## Phase 4 — Collection, set, and category landing pages
 
 **Status:** Planned  

@@ -25,3 +25,7 @@ export interface CardsResponse {
 		nodes: Card[];
 	};
 }
+
+export interface SingleCardResponse {
+	post: Card | null;
+}

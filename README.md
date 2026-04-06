@@ -6,6 +6,7 @@ This is a fork of [Clem Omotosho’s headless WordPress workshop repo](https://g
 
 You can see a working front-end demo of Clem's current version here: [https://headless-wordpress-sveltekit-site.vercel.app/
 ](https://headless-wordpress-sveltekit-site.vercel.app/)
+
 The upstream repo and this fork are intended for:
 - YEG meetup attendees following along with the workshop series.
 - Students learning modern WordPress development.
@@ -198,7 +199,7 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 Original workshop/tutorial concept and repo inspiration:
 - [Clem Omotosho](https://github.com/clementm8/)
 
-Meetup context and writeup:
+Meetup context and write-up:
 - [Edmonton WordPress Meetup / WP YEG](https://wpyeg.org) blog: "[What is headless WordPress?](https://wpyeg.org/2026/02/26/what-is-headless-wordpress-jan-feb-workshop-recap-whats-next-at-the-yeg-wp-meetup/)"
 
 ## Fork note

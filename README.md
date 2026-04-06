@@ -4,6 +4,8 @@
 
 This is a fork of [Clem Omotosho’s headless WordPress workshop repo](https://github.com/clementm8/Headless-WordPress-SvelteKit-Site), a **hands-on tutorial project for the [Edmonton WordPress Meetup](https://wpyeg.org/)**.
 
+You can see a working front-end demo of Clem's current version here: [https://headless-wordpress-sveltekit-site.vercel.app/
+](https://headless-wordpress-sveltekit-site.vercel.app/)
 The upstream repo and this fork are intended for:
 - YEG meetup attendees following along with the workshop series.
 - Students learning modern WordPress development.
@@ -15,7 +17,7 @@ The upstream repo and this fork are intended for:
 
 ### What's unique to this fork?
 
-I wanted to add a live rating interaction and originally did that in a very crude way that is insecure and not likely to do well under any kind of load: direct GraphQL mutations to WordPress `postmeta`. Later, this was modified so that read and write actions happened through the Svelte back end — more secure but also slowing down an already non-optimized demo. Finally, in this fork, WordPress remains entirely a read-only content source, while SvelteKit handles the front-end experience and interactive features by storing the changing rating figures per card in its own SQLite database. I used Claude and then Codex to rapidly experiment with (and document) different UX patterns and the underlying architectures for this extended tutorial. 
+I wanted to add a live rating interaction, but originally I did that in a very crude way that is insecure and not likely to do well under any kind of load: direct GraphQL mutations to WordPress `postmeta`. Later, this was modified so that read and write actions happened through the Svelte back end — more secure but also slowing down an already non-optimized demo. Finally, in this fork, WordPress remains entirely a read-only content source, while SvelteKit handles the front-end experience and interactive features by storing the changing rating figures per card in its own SQLite database. I used Claude and then Codex to rapidly experiment with (and document) different UX patterns and the underlying architectures for this extended tutorial. 
 
 - Added live rating interactions and expanded/modified visual feedback to the **UI**. (See [`/docs/decisions/ratings-storage.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/decisions/ratings-storage.md).)
 - Replaced the "Click Me" button and card descriptive content that it rolls out in favour of clicking through to an individual card page.

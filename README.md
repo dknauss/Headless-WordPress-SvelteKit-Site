@@ -79,7 +79,7 @@ Copy `.env.example` to `.env` and adjust values as needed.
 - `RATING_RATE_LIMIT_MAX_ATTEMPTS`: max rating actions allowed per window
 - `RATING_RATE_LIMIT_WINDOW_MS`: rate-limit window in milliseconds
 
-For this machine, the safest local default is `http://127.0.0.1:8882/graphql/`. If your WordPress site runs on a different port, update `.env`.
+A common local default is `http://127.0.0.1:8882/graphql/`. If your WordPress site runs on a different host or port, update `.env`.
 In development, the default rating limit is 50 actions per minute so local demos do not get throttled too aggressively.
 
 ## Local setup

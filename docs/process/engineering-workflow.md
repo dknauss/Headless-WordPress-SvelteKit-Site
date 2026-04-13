@@ -1,13 +1,13 @@
-# Engineering Workflow: GSD + TDD + BDD
+# Engineering Workflow: Planning + TDD + BDD
 
 This project uses a lightweight combination of:
-- **GSD** for planning and execution structure
+- lightweight planning notes for implementation structure
 - **TDD** for server-side logic and regression coverage
 - **BDD** for user-visible acceptance behavior
 
-## GSD in this repo
+## Planning in this repo
 
-Planning artifacts live under `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/.planning`.
+Planning notes and decision records should stay concise, repository-relative, and useful to future contributors.
 
 Use them to:
 - define the current phase
@@ -17,7 +17,7 @@ Use them to:
 ## TDD in this repo
 
 Unit tests live under:
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/tests/unit`
+- `tests/unit`
 
 Primary target areas:
 - rating store behavior
@@ -33,10 +33,10 @@ Recommended loop:
 ## BDD in this repo
 
 BDD-style scenarios live under:
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/tests/bdd/features`
+- `tests/bdd/features`
 
 Executable scenario tests live under:
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/tests/bdd`
+- `tests/bdd`
 
 Recommended loop:
 1. describe behavior in scenario language

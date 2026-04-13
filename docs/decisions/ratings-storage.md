@@ -8,7 +8,7 @@ Store public rating state in a local SQLite database owned by SvelteKit, while k
 
 ## Context
 
-This repo needs a small public star-rating interaction similar to the `/Users/danknauss/Developer/GitHub/trading-cards-collection` example, but without relying on an mu-plugin and without exposing WordPress as a public write target.
+This repo needs a small public star-rating interaction similar to the earlier trading-card prototype work, but without relying on an mu-plugin and without exposing WordPress as a public write target.
 
 The app is intended for local development and, at most, a low-traffic public demo deployment.
 

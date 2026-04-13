@@ -1,8 +1,7 @@
 # SEO / AEO / GEO Roadmap
 
-**Project:** `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site`  
-**Status:** Planning document  
-**Current intent:** Document the roadmap now; implement Phase 1 later.
+**Status:** Living roadmap  
+**Current intent:** Record completed foundation work and outline the next SEO phases.
 
 ## Terms
 
@@ -26,15 +25,14 @@ Current strengths:
 - server-side loading is already in place
 - WordPress is cleanly read-only
 - card entities already have useful fields like `title`, `slug`, `excerpt`, `date`, `featuredImage`, and `categories`
+- dedicated card URLs are in place
+- metadata, sitemap, robots.txt, and structured data foundations are in place
 
 Current gaps:
-- no dedicated URL per card
-- minimal metadata
-- no sitemap
-- no robots.txt
-- no structured data
 - limited internal linking strategy
 - no AI-oriented discoverability guidance such as `llms.txt`
+- no category or set landing pages
+- no richer entity enrichment beyond the first-pass metadata and fact blocks
 
 ## Guiding principles
 
@@ -65,7 +63,7 @@ Make this project discoverable and understandable as a collection of individual 
 
 ## Phase 1 — Card detail pages and metadata
 
-**Status:** Planned, not yet implemented  
+**Status:** Implemented  
 **Priority:** Highest
 
 ### Goal
@@ -108,16 +106,16 @@ Add JSON-LD for:
 - homepage: `CollectionPage` and `ItemList`
 - card pages: `Thing` or `CreativeWork`
 
-### Proposed files
+### Implemented files
 
-Likely additions:
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/routes/cards/[slug]/+page.server.ts`
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/routes/cards/[slug]/+page.svelte`
+Implemented additions:
+- `src/routes/cards/[slug]/+page.server.ts`
+- `src/routes/cards/[slug]/+page.svelte`
 
-Likely updates:
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/lib/server/wp.ts`
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/routes/+page.svelte`
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/routes/+page.server.ts`
+Implemented updates:
+- `src/lib/server/wp.ts`
+- `src/routes/+page.svelte`
+- `src/routes/+page.server.ts`
 
 ### Deliverables
 
@@ -138,7 +136,7 @@ Likely updates:
 
 ## Phase 2 — Crawl surfaces and index hygiene
 
-**Status:** Planned  
+**Status:** Implemented  
 **Priority:** High
 
 ### Goal
@@ -170,11 +168,11 @@ Ensure:
 - each card page canonical points to itself
 - no duplicate public routes compete with the canonical card URLs
 
-### Proposed files
+### Implemented files
 
-Likely additions:
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/routes/sitemap.xml/+server.ts`
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/routes/robots.txt/+server.ts`
+Implemented additions:
+- `src/routes/sitemap.xml/+server.ts`
+- `src/routes/robots.txt/+server.ts`
 
 ### Deliverables
 
@@ -354,7 +352,7 @@ Ensure:
 ### Proposed files
 
 Possible addition:
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/static/llms.txt`
+- `static/llms.txt`
 
 ### Deliverables
 

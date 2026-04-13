@@ -25,14 +25,14 @@ A headless WordPress + SvelteKit tutorial project for displaying a trading card 
 ### Medium Priority
 - [ ] Add card sorting options (by rating, title, date, etc.)
 - [ ] Implement category filtering
-- [ ] Add individual card detail pages
+- [ ] Add category or set landing pages
 
 ### Low Priority
 - [ ] Add card statistics/dashboard
 - [ ] Implement favorites/bookmarks
 
 ## In Progress
-- Currently working on: Polishing and testing the complete data flow
+- Currently working on: Polishing search/discovery features and follow-up documentation
 
 ## Completed
 - [x] Set up SvelteKit project
@@ -52,6 +52,9 @@ A headless WordPress + SvelteKit tutorial project for displaying a trading card 
 - [x] Display categories from WordPress
 - [x] Move ratings storage and vote logic into SvelteKit + SQLite
 - [x] Add CSRF, signed session cookies, and rate limiting for ratings
+- [x] Add individual card detail pages
+- [x] Add first-pass SEO foundations (metadata, sitemap, robots.txt, structured data)
+- [x] Add unit tests, BDD-style tests, and GitHub Actions CI
 
 ## Project Structure
 ```

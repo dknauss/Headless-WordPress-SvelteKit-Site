@@ -1,8 +1,8 @@
 # Accessibility Changes for the Ratings / Card Interaction Work
 
-This document describes the accessibility improvements made during the current ratings and card-interaction work in `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site`.
+This document describes the accessibility improvements made during the ratings and card-interaction work in this repository.
 
-It is intended to complement `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/docs/accessibility/manual-qa-checklist.md`.
+It is intended to complement `docs/accessibility/manual-qa-checklist.md`.
 
 ## Scope
 
@@ -39,7 +39,7 @@ Important limitation:
 
 ## File-by-file change summary
 
-### 1. `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/components/Card.svelte`
+### 1. `src/components/Card.svelte`
 
 This file received the largest accessibility update.
 
@@ -172,7 +172,7 @@ Why:
 
 ---
 
-### 2. `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/routes/+layout.svelte`
+### 2. `src/routes/+layout.svelte`
 
 #### Added a reusable `.screen-reader-text` utility
 
@@ -185,7 +185,7 @@ Why:
 
 ---
 
-### 3. `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/src/routes/+page.svelte`
+### 3. `src/routes/+page.svelte`
 
 #### A. Added a document title
 
@@ -257,7 +257,7 @@ Even with a clean Lighthouse result, the following still need manual QA:
 - contrast edge cases on all hover / focus / badge states
 
 Use:
-- `/Users/danknauss/Developer/GitHub/Headless-WordPress-SvelteKit-Site/docs/accessibility/manual-qa-checklist.md`
+- `docs/accessibility/manual-qa-checklist.md`
 
 ## Recommended next steps
 

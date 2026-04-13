@@ -19,6 +19,7 @@
 		--comic-border: 4px solid var(--color-hero-black);
 		--comic-shadow: 6px 6px 0px var(--color-hero-black);
 		--font-heading: "Bangers", system-ui, sans-serif;
+		--font-rating: "Fira Sans Extra Condensed", var(--font-body);
 		--font-body: "Inter", system-ui, sans-serif;
 		--font-comic-text: var(--font-body);
 	}
@@ -42,5 +43,33 @@
 		font-family: var(--font-heading);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
+	}
+
+	:global(.screen-reader-text) {
+		border: 0;
+		clip-path: inset(50%);
+		height: 1px;
+		margin: -1px;
+		overflow: hidden;
+		padding: 0;
+		position: absolute;
+		width: 1px;
+		word-wrap: normal !important;
+	}
+
+	:global(.screen-reader-text:focus) {
+		background-color: #eee;
+		clip-path: none;
+		color: #444;
+		display: block;
+		font-size: 1em;
+		height: auto;
+		left: 5px;
+		line-height: normal;
+		padding: 15px 23px 14px;
+		text-decoration: none;
+		top: 5px;
+		width: auto;
+		z-index: 100000;
 	}
 </style>

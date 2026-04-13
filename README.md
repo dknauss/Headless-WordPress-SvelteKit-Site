@@ -2,41 +2,28 @@
 
 ![Screenshot from the Edmonton WordPress Meetup headless WordPress workshop recap](static/images/meetup-headless-workshop.png)
 
-This is a fork of [Clem Omotosho’s headless WordPress workshop repo](https://github.com/clementm8/Headless-WordPress-SvelteKit-Site), a **hands-on tutorial project for the [Edmonton WordPress Meetup](https://wpyeg.org/)**.
+This is a fork of [Clem Omotosho’s headless WordPress workshop repo](https://github.com/clementm8/Headless-WordPress-SvelteKit-Site), adapted as a **hands-on tutorial project for the [Edmonton WordPress Meetup](https://wpyeg.org/)**.
 
-You can see a working front-end demo of Clem's current version here: [https://headless-wordpress-sveltekit-site.vercel.app/
-](https://headless-wordpress-sveltekit-site.vercel.app/)
+You can see a working front-end demo of Clem's current version here: [https://headless-wordpress-sveltekit-site.vercel.app/](https://headless-wordpress-sveltekit-site.vercel.app/)
 
 The upstream repo and this fork are intended for:
-- YEG meetup attendees following along with the workshop series.
-- Students learning modern WordPress development.
-- Developers curious about **headless / decoupled WordPress** with **SvelteKit**, **WPGraphQL**, and a local WordPress install.
+- YEG meetup attendees following along with the workshop series
+- students learning modern WordPress development
+- developers curious about **headless / decoupled WordPress** with **SvelteKit**, **WPGraphQL**, and a local WordPress install
 
-## Getting Started
+## Getting started
 
-[Clem's tutorial](https://amazing-questions-440483.framer.app/) provides the 5-step workshop path to create your own working version of the original demo site in his repo. You should work through the tutorial in your local development environment first. Then, if you want to share any changes you make, create a fork and make a pull request to Clem's upstream source. (You could also do that with this downstream repo if you prefer.) Since this is a purely educational project, please document your work excessively, explain what you've learned, and ask any questions you have. :-)
+[Clem's tutorial](https://amazing-questions-440483.framer.app/) provides the 5-step workshop path to create your own working version of the original demo site. Work through that flow first in your local development environment. Then use this fork to study one path for extending the project safely and incrementally.
 
-### What's unique to this fork?
+## Architecture summary
 
-I wanted to add a live rating interaction, but originally I did that in a very crude way that is insecure and not likely to do well under any kind of load: direct GraphQL mutations to WordPress `postmeta`. Later, this was modified so that read and write actions happened through the Svelte back end — more secure but also slowing down an already non-optimized demo. Finally, in this fork, WordPress remains entirely a read-only content source, while SvelteKit handles the front-end experience and interactive features by storing the changing rating figures per card in its own SQLite database. I used Claude and then Codex to rapidly experiment with (and document) different UX patterns and the underlying architectures for this extended tutorial. 
+This fork demonstrates a headless architecture in which WordPress stays read-only and SvelteKit owns the interactive rating feature. Content lives in WordPress and is rendered through SvelteKit using WPGraphQL.
 
-- Added live rating interactions and expanded/modified visual feedback to the **UI**. (See [`/docs/decisions/ratings-storage.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/decisions/ratings-storage.md).)
-- Replaced the "Click Me" button and card descriptive content that it rolls out in favour of clicking through to an individual card page.
-  - Added a second page template for individual cards. (Better **UX** and **SEO**)
-- Basic **SEO** framework and enhancements. (See [`/docs/seo/roadmap.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/seo/roadmap.md).) 
-- Basic **Accessibility** enhancements. (See [`/docs/accessibility/accessibility-changes.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/accessibility/accessibility-changes.md) and [`manual-qa-checklist.md`](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/blob/codex/card-image-loading/docs/accessibility/manual-qa-checklist.md).)
+- **WordPress**: read-only content source for cards
+- **SvelteKit**: server-rendered app, rating API, CSRF/session enforcement
+- **SQLite**: local rating, vote, and rate-limit storage at `.data/ratings.sqlite`
 
-*Look at the commit history, documentation, and pull requests to learn more.*
-
-### What you get here
-
-Clem's original Marvel-themed trading-card collection app where:
-- **WordPress** stores the card content. (Sole content source)
-- **WPGraphQL** exposes that content to the front end. (API layer for reading posts/card data from WordPress.)
-- **SvelteKit** renders the collection and card detail pages. (Runtime JS front-end app, routes, UI, metadata, rating API)
-- **SQLite** stores local demo-only ratings in the SvelteKit app. (Local ratings/vote storage at `.data/ratings.sqlite`)
-
-### What this fork adds beyond the original workshop repo
+## What this fork adds beyond the original workshop repo
 
 This fork goes beyond the initial workshop scaffold with:
 - server-rendered card detail pages
@@ -50,38 +37,50 @@ This fork goes beyond the initial workshop scaffold with:
 - improved image loading and caching for the card grid
 - a safer architecture that keeps WordPress read-only
 
-## Why keep WordPress read-only?
+See also:
+- [docs/decisions/ratings-storage.md](docs/decisions/ratings-storage.md)
+- [docs/seo/roadmap.md](docs/seo/roadmap.md)
+- [docs/accessibility/accessibility-changes.md](docs/accessibility/accessibility-changes.md)
+- [docs/accessibility/manual-qa-checklist.md](docs/accessibility/manual-qa-checklist.md)
 
-For this demo/tutorial, that tradeoff keeps the architecture easier to reason about.
+## Why ratings live in SvelteKit instead of WordPress
+
+We explicitly chose to keep rating writes out of WordPress so we do not need an mu-plugin or another public WordPress write surface.
 
 **Benefits:**
-- no public anonymous write endpoint on WordPress
-- no mu-plugin required for ratings
-- easier experimentation in SvelteKit
-- clearer separation between content management and front-end interaction
+- keeps WordPress read-only for this demo
+- avoids exposing anonymous WPGraphQL or REST mutations
+- lets us enforce CSRF, signed sessions, and rate limiting in one place
+- keeps the rating interaction fast for a simple local or low-traffic deployment
 
 **Tradeoffs:**
 - ratings are local to the SvelteKit app instance
-- SQLite is best for simple local or low-traffic single-instance deployments
-- if this grew into a larger production system, Postgres would be a better next step
+- SQLite is best for one persistent server, not multi-instance/serverless hosting
+- if this later needs shared infrastructure or analytics-heavy querying, Postgres becomes the better fit
 
-**See:**
-- [docs/decisions/ratings-storage.md](docs/decisions/ratings-storage.md)
-- [docs/seo/roadmap.md](docs/seo/roadmap.md)
+See [docs/decisions/ratings-storage.md](docs/decisions/ratings-storage.md) for the full decision record.
 
 ## Recommended learning path
 
-If you are coming from the meetup or starting fresh, this is the suggested path:
+If you are coming from the meetup or starting fresh, this is a good path:
 
 1. **[Read the meetup recap](https://wpyeg.org/2026/02/26/what-is-headless-wordpress-jan-feb-workshop-recap-whats-next-at-the-yeg-wp-meetup/)** to understand what “headless” means in practical WordPress terms.
-2. **[Work through Clem’s tutorial](https://amazing-questions-440483.framer.app/)** to understand the original workshop flow:
-   - intro to headless
-   - WordPress + WPGraphQL
-   - setting up SvelteKit
-   - building the UI
-   - building the data layer
+2. **[Work through Clem’s tutorial](https://amazing-questions-440483.framer.app/)** to understand the original workshop flow.
 3. **Use this fork** to study how the project can be extended safely and incrementally.
-4. **Create your own fork** — this is not a private learning exercise: anyone can join. :-) 
+4. **Create your own fork** if you want to experiment and share improvements.
+
+## Configuration
+
+Copy `.env.example` to `.env` and adjust values as needed.
+
+- `WP_GRAPHQL_URL`: WordPress GraphQL endpoint used by the SvelteKit server
+- `PUBLIC_SITE_URL`: canonical public site URL used for metadata, sitemap, and robots output
+- `SESSION_SECRET`: secret used to sign the session cookie in production
+- `RATING_RATE_LIMIT_MAX_ATTEMPTS`: max rating actions allowed per window
+- `RATING_RATE_LIMIT_WINDOW_MS`: rate-limit window in milliseconds
+
+For this machine, the safest local default is `http://127.0.0.1:8882/graphql/`. If your WordPress site runs on a different port, update `.env`.
+In development, the default rating limit is 50 actions per minute so local demos do not get throttled too aggressively.
 
 ## Local setup
 
@@ -92,7 +91,7 @@ Follow Clem’s tutorial and the meetup notes to create a local WordPress site a
 - WPGraphQL
 - the workshop content/cards
 
-The tutorial materials include the **trading-card content export data** used for the workshop. Import that into WordPress so your local site has the sample card content.
+The tutorial materials include the trading-card content export data used for the workshop. Import that into WordPress so your local site has the sample card content.
 
 ### 2. Confirm your GraphQL endpoint
 
@@ -125,6 +124,8 @@ RATING_RATE_LIMIT_WINDOW_MS=60000
 ### 5. Run the app
 
 ```bash
+npm run check
+npm test
 npm run dev
 ```
 
@@ -140,6 +141,12 @@ Check the project:
 
 ```bash
 npm run check
+```
+
+Run tests:
+
+```bash
+npm test
 ```
 
 Build the project:
@@ -200,7 +207,7 @@ Original workshop/tutorial concept and repo inspiration:
 - [Clem Omotosho](https://github.com/clementm8/)
 
 Meetup context and write-up:
-- [Edmonton WordPress Meetup / WP YEG](https://wpyeg.org) blog: "[What is headless WordPress?](https://wpyeg.org/2026/02/26/what-is-headless-wordpress-jan-feb-workshop-recap-whats-next-at-the-yeg-wp-meetup/)"
+- [Edmonton WordPress Meetup / WP YEG](https://wpyeg.org) blog: ["What is headless WordPress?"](https://wpyeg.org/2026/02/26/what-is-headless-wordpress-jan-feb-workshop-recap-whats-next-at-the-yeg-wp-meetup/)
 
 ## Fork note
 

@@ -1,19 +1,25 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { getCards } from '$lib/api';
 	import CardRow from '../components/CardRow.svelte';
 	import type { Card as CardType } from '$lib/types';
+	import type { PageData } from './$types';
 
-	let cards: CardType[] = [];
-	let loading = true;
-	let error = '';
+	export let data: PageData;
+
+	let cards: CardType[] = data.cards;
+	let error = data.error;
 	let currentPage = 0;
 	const perPage = 6;
 
-	$: totalPages = Math.ceil(cards.length / perPage);
+	$: cards = data.cards;
+	$: error = data.error;
+	$: seo = data.seo;
+	$: totalPages = Math.max(1, Math.ceil(cards.length / perPage));
 	$: paginatedCards = cards.slice(currentPage * perPage, (currentPage + 1) * perPage);
 	$: hasPrev = currentPage > 0;
 	$: hasNext = currentPage < totalPages - 1;
+	$: if (currentPage > totalPages - 1) {
+		currentPage = Math.max(totalPages - 1, 0);
+	}
 
 	function nextPage() {
 		if (hasNext) currentPage++;
@@ -22,48 +28,54 @@
 	function prevPage() {
 		if (hasPrev) currentPage--;
 	}
-
-	onMount(async () => {
-		try {
-			const result = await getCards();
-			cards = result.posts.nodes;
-		} catch (err) {
-			console.error('Error fetching cards:', err);
-		} finally {
-			loading = false;
-		}
-	});
 </script>
 
-<div class="container">
+<svelte:head>
+	<title>{seo.title}</title>
+	<meta name="description" content={seo.description} />
+	<link rel="canonical" href={seo.canonical} />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content={seo.title} />
+	<meta property="og:description" content={seo.description} />
+	<meta property="og:url" content={seo.canonical} />
+	{#if seo.image}
+		<meta property="og:image" content={seo.image} />
+	{/if}
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={seo.title} />
+	<meta name="twitter:description" content={seo.description} />
+	{#if seo.image}
+		<meta name="twitter:image" content={seo.image} />
+	{/if}
+	<script type="application/ld+json">{seo.jsonLd}</script>
+</svelte:head>
+
+<main class="container">
 	<header class="page-header">
 		<h1 class="comic-title">Trading Card <br />Collection</h1>
 		<div class="comic-subtitle">THE HERO ARCHIVE</div>
-
 	</header>
 
-	{#if loading}
-		<p class="message animate-pulse">Scanning database...</p>
-	{:else if error}
+	{#if error}
 		<p class="message error">CRITICAL ERROR: {error}</p>
 	{:else if cards.length === 0}
 		<p class="message">No heroes detected in this sector.</p>
 	{:else}
 		<div class="cards-grid">
 			<nav class="pagination" aria-label="Card pages">
-				<button class="pagination-btn" disabled={!hasPrev} on:click={prevPage}>
+				<button class="pagination-btn" type="button" disabled={!hasPrev} on:click={prevPage}>
 					PREVIOUS
 				</button>
 				<span class="page-indicator">PAGE {currentPage + 1} OF {totalPages}</span>
-				<button class="pagination-btn" disabled={!hasNext} on:click={nextPage}>
+				<button class="pagination-btn" type="button" disabled={!hasNext} on:click={nextPage}>
 					NEXT
 				</button>
 			</nav>
 
-		<CardRow cards={paginatedCards} />
+			<CardRow cards={paginatedCards} />
 		</div>
 	{/if}
-</div>
+</main>
 
 <style>
 	.container {
@@ -122,20 +134,6 @@
 		margin-inline: auto;
 	}
 
-	.animate-pulse {
-		animation: pulse 1.5s infinite;
-	}
-
-	@keyframes pulse {
-		0%,
-		100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.5;
-		}
-	}
-
 	.pagination {
 		display: flex;
 		align-items: center;
@@ -167,6 +165,11 @@
 	.pagination-btn:disabled {
 		opacity: 0.35;
 		cursor: not-allowed;
+	}
+
+	.pagination-btn:focus-visible {
+		outline: 4px solid var(--color-hero-yellow);
+		outline-offset: 4px;
 	}
 
 	.page-indicator {

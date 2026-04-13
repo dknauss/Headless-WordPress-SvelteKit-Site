@@ -4,25 +4,42 @@
 
 	export let cards: CardType[];
 
-	let expandedIndex: number | null = null;
-	let rowEl: HTMLDivElement;
+	let readyIndexes = new Set<number>();
+	let revealedCount = cards.length ? 1 : 0;
+	let previousSignature = '';
 
-	function handleToggle(index: number) {
-		expandedIndex = expandedIndex === index ? null : index;
+	function getCardsSignature(nextCards: CardType[]) {
+		return nextCards.map((card) => card.id).join('|');
 	}
 
-	function handleClickOutside(event: MouseEvent) {
-		if (expandedIndex !== null && rowEl && !rowEl.contains(event.target as Node)) {
-			expandedIndex = null;
+	function resetRevealState(nextCards: CardType[]) {
+		readyIndexes = new Set();
+		revealedCount = nextCards.length ? 1 : 0;
+	}
+
+	$: {
+		const signature = getCardsSignature(cards);
+		if (signature !== previousSignature) {
+			previousSignature = signature;
+			resetRevealState(cards);
 		}
+	}
+
+	function flushRevealQueue() {
+		while (revealedCount < cards.length && readyIndexes.has(revealedCount - 1)) {
+			revealedCount += 1;
+		}
+	}
+
+	function handleImageReady(index: number) {
+		readyIndexes.add(index);
+		flushRevealQueue();
 	}
 </script>
 
-<svelte:window on:click={handleClickOutside} />
-
-<div bind:this={rowEl} class="cards-row">
-	{#each cards as card, i}
-		<Card {card} expanded={expandedIndex === i} index={i} on:toggle={() => handleToggle(i)} />
+<div class="cards-row">
+	{#each cards as card, i (card.id)}
+		<Card {card} index={i} revealed={i < revealedCount} on:imageready={() => handleImageReady(i)} />
 	{/each}
 </div>
 

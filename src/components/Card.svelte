@@ -1,86 +1,213 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
+	import { getResponsiveImage, CARD_GRID_IMAGE_SIZES } from '$lib/image';
+import { decrementRating, incrementRating } from '$lib/rating';
 	import type { Card } from '$lib/types';
 
 	export let card: Card;
-	export let expanded = false;
 	export let index = 0;
+	export let revealed = true;
 
-	const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher<{ imageready: void }>();
 
-	function toggleExpand() {
-		dispatch('toggle');
+	function getRestRotation(seed: string) {
+		let hash = 0;
+
+		for (let i = 0; i < seed.length; i += 1) {
+			hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+		}
+
+		const normalized = ((Math.abs(hash) % 1000) / 1000) * 4 - 2;
+
+		if (Math.abs(normalized) < 0.35) {
+			return normalized < 0 ? -0.6 : 0.6;
+		}
+
+		return Number(normalized.toFixed(2));
+	}
+
+	function toDomId(value: string) {
+		return value
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '');
+	}
+
+	let hasVoted = card.viewerHasVoted ?? false;
+	let isVoting = false;
+	let imageLoaded = !card.featuredImage?.node?.sourceUrl;
+	let imageEl: HTMLImageElement | null = null;
+	let hasReportedImageReady = false;
+
+	$: if (!isVoting) {
+		hasVoted = card.viewerHasVoted ?? false;
+	}
+	$: imageAsset = getResponsiveImage(card.featuredImage?.node);
+	$: imageLoaded = !imageAsset?.src || imageLoaded;
+	$: restRotation = getRestRotation(card.id || card.slug || card.title || String(index));
+	$: ratingText = String(card.rating ?? 0);
+	$: isMultiDigitRating = ratingText.length > 1;
+	$: cardDomId = toDomId(card.id || card.slug || card.title || `card-${index}`);
+	$: ratingStatusId = `card-rating-status-${cardDomId}`;
+	$: detailUrl = card.slug ? `/cards/${card.slug}` : '';
+	$: imageLoading = (index < 6 ? 'eager' : 'lazy') as 'eager' | 'lazy';
+	$: imageFetchPriority = (index < 2 ? 'high' : 'auto') as 'high' | 'auto';
+
+	function reportImageReady() {
+		if (hasReportedImageReady) {
+			return;
+		}
+
+		hasReportedImageReady = true;
+		dispatch('imageready');
+	}
+
+	function handleImageReady() {
+		imageLoaded = true;
+		reportImageReady();
+	}
+
+	onMount(() => {
+		if (!imageAsset?.src) {
+			reportImageReady();
+			return;
+		}
+
+		if (imageEl?.complete) {
+			imageLoaded = true;
+			reportImageReady();
+		}
+	});
+
+	async function handleRatingClick(event: MouseEvent) {
+		event.stopPropagation();
+
+		if (isVoting || !card.id) {
+			return;
+		}
+
+		const previousRating = card.rating ?? 0;
+		const previousHasVoted = hasVoted;
+		const isRemovingVote = hasVoted;
+		const optimisticRating = Math.max(0, previousRating + (isRemovingVote ? -1 : 1));
+
+		isVoting = true;
+		hasVoted = !isRemovingVote;
+		card.viewerHasVoted = hasVoted;
+		card.rating = optimisticRating;
+		card = card;
+
+		try {
+			const result = isRemovingVote
+				? await decrementRating(card.id)
+				: await incrementRating(card.id);
+
+			card.rating = result.rating;
+			hasVoted = result.hasVoted;
+			card.viewerHasVoted = result.hasVoted;
+			card = card;
+		} catch (error) {
+			hasVoted = previousHasVoted;
+			card.viewerHasVoted = previousHasVoted;
+			card.rating = previousRating;
+			card = card;
+			console.error('Failed to update rating:', error);
+		} finally {
+			isVoting = false;
+		}
 	}
 </script>
 
-<button
-	type="button"
-	class="trading-card"
-	class:expanded={expanded}
-	aria-expanded={expanded}
-	on:click={toggleExpand}
-	style:animation-delay="{index * 80}ms"
+<article
+	class="trading-card-shell"
+	class:revealed={revealed}
+	class:image-loaded={imageLoaded}
+	style:animation-delay={`${index * 80}ms`}
+	style:--rest-rotation={`${restRotation}deg`}
 >
+	<button
+		class="rating-starburst"
+		class:voted={hasVoted}
+		class:voting={isVoting}
+		class:multi-digit={isMultiDigitRating}
+		on:click={handleRatingClick}
+		aria-label={hasVoted ? `Remove rating for ${card.title}` : `Rate ${card.title}`}
+		aria-pressed={hasVoted}
+		aria-describedby={ratingStatusId}
+		disabled={isVoting || !card.id}
+		type="button"
+	>
+		<svg viewBox="0 0 100 100" class="starburst-svg" aria-hidden="true">
+			<polygon
+				points="50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35"
+				fill={hasVoted ? 'var(--color-hero-red)' : 'var(--color-hero-yellow)'}
+				stroke="black"
+				stroke-width="4"
+			/>
+		</svg>
+		<span class="rating-value" aria-hidden="true">{ratingText}</span>
+	</button>
+	<span id={ratingStatusId} class="screen-reader-text" aria-live="polite">
+		Rating {ratingText}. {hasVoted ? 'Your rating is currently applied.' : 'You have not rated this card yet.'}
+	</span>
+
 	<div class="card-content">
-		<div class="image-wrapper">
-			{#if card.featuredImage?.node?.sourceUrl}
-				<img src={card.featuredImage.node.sourceUrl} alt={card.title} loading="lazy" />
+		<div class="image-wrapper" class:image-loaded={imageLoaded}>
+			{#if imageAsset?.src}
+				<img
+					bind:this={imageEl}
+					class:image-visible={imageLoaded}
+					src={imageAsset.src}
+					srcset={imageAsset.srcSet}
+					sizes={CARD_GRID_IMAGE_SIZES}
+					width={imageAsset.width}
+					height={imageAsset.height}
+					alt={card.title}
+					loading={imageLoading}
+					fetchpriority={imageFetchPriority}
+					decoding="async"
+					on:load={handleImageReady}
+					on:error={handleImageReady}
+				/>
 			{:else}
 				<div class="no-image">NO HERO DATA</div>
 			{/if}
 		</div>
 
-		{#if card.rating !== undefined && card.rating !== null}
-			<div class="rating-starburst" aria-hidden="true">
-				<svg viewBox="0 0 100 100" class="starburst-svg">
-					<polygon
-						points="50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35"
-						fill="var(--color-hero-yellow)"
-						stroke="black"
-						stroke-width="4"
-					/>
-				</svg>
-				<span class="rating-value">{card.rating}</span>
-			</div>
-		{/if}
-
 		<div class="card-body">
-			<h3>{card.title}</h3>
+			<h2>{card.title}</h2>
 
 			<div class="card-meta">
 				{#if card.categories?.nodes?.length}
-					<span class="card-set">
-						{card.categories.nodes[0].name}
-					</span>
+					<span class="card-set">{card.categories.nodes[0].name}</span>
 				{/if}
 
-				<div class="expand-prompt" class:hidden={expanded}>
-					<span class="expand-prompt-desktop">CLICK ME</span>
-					<span class="expand-prompt-mobile">TAP ME</span>
-				</div>
-			</div>
-
-			<div class="excerpt-accordion" class:open={expanded}>
-				<div class="excerpt-content">
-					<div class="excerpt">{@html card.excerpt}</div>
-				</div>
+				{#if detailUrl}
+					<a class="detail-link" href={detailUrl}>View Card</a>
+				{/if}
 			</div>
 		</div>
 	</div>
-</button>
+</article>
 
 <style>
-	.trading-card {
+	.trading-card-shell {
+		display: none;
 		background: transparent;
 		border: none;
-		transition: transform 0.2s ease-out;
+		transition:
+			transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+			box-shadow 0.15s ease;
 		position: relative;
-		cursor: pointer;
 		overflow: visible;
-		padding: 0;
-		text-align: left;
 		-webkit-tap-highlight-color: transparent;
-		animation: card-enter 1s ease-out both;
+		box-shadow: var(--comic-shadow);
+		transform: rotate(var(--rest-rotation, 0deg));
+		transform-origin: center center;
+	}
+
+	.trading-card-shell.revealed {
+		display: block;
 	}
 
 	@keyframes card-enter {
@@ -94,44 +221,12 @@
 		}
 	}
 
-	.trading-card::before {
-		content: "";
-		position: absolute;
-		top: 3px;
-		left: 3px;
-		width: 100%;
-		height: 100%;
-		background-color: var(--color-hero-black);
-		background-image: repeating-linear-gradient(
-			-45deg,
-			transparent,
-			transparent 5px,
-			var(--color-hero-yellow) 5px,
-			var(--color-hero-yellow) 6px
-		);
-		opacity: 0;
-		transition: opacity 0.2s ease-out;
-		pointer-events: none;
-	}
-
-	.trading-card:focus-visible {
-		outline: 4px solid var(--color-hero-yellow);
-		outline-offset: 6px;
-	}
-
 	@media (hover: hover) {
-		.trading-card:hover {
-			transform: translateY(-2px) scale(1.01);
+		.trading-card-shell.revealed:hover {
+			transform: scale(1.02) rotate(0deg);
 			z-index: 10;
+			box-shadow: 10px 10px 0px var(--color-hero-black);
 		}
-
-		.trading-card:hover::before {
-			opacity: 1;
-		}
-	}
-
-	.trading-card.expanded {
-		z-index: 15;
 	}
 
 	.card-content {
@@ -139,6 +234,7 @@
 		flex-direction: column;
 		position: relative;
 		z-index: 1;
+		animation: card-enter 0.55s cubic-bezier(0.2, 0.9, 0.2, 1) both;
 		border: 2px solid var(--color-hero-black);
 		background: var(--color-hero-white);
 		background-image: linear-gradient(
@@ -154,39 +250,78 @@
 		background-size: 4px 4px;
 	}
 
-	.trading-card.expanded .card-content {
-		border-color: var(--color-hero-red);
-	}
-
-	.trading-card.expanded .card-body {
-		overflow-y: auto;
-	}
-
 	.image-wrapper {
 		aspect-ratio: 3 / 4;
-		background-color: var(--color-hero-blue);
 		overflow: hidden;
 		border-bottom: var(--comic-border);
 		position: relative;
+		background-color: #e8eefc;
+		background-image:
+			radial-gradient(circle at 1px 1px, rgba(37, 99, 235, 0.28) 1px, transparent 0),
+			linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(37, 99, 235, 0.08));
+		background-size: 12px 12px, 100% 100%;
+	}
+
+	.image-wrapper::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			110deg,
+			rgba(255, 255, 255, 0) 25%,
+			rgba(255, 255, 255, 0.5) 50%,
+			rgba(255, 255, 255, 0) 75%
+		);
+		background-size: 200% 100%;
+		animation: image-shimmer 1.4s linear infinite;
+		opacity: 1;
+		transition: opacity 0.2s ease-out;
+	}
+
+	.image-wrapper.image-loaded::before {
+		opacity: 0;
+	}
+
+	@keyframes image-shimmer {
+		from {
+			background-position: 200% 0;
+		}
+		to {
+			background-position: -200% 0;
+		}
 	}
 
 	img {
 		width: 100%;
 		height: 100%;
+		display: block;
 		object-fit: cover;
-		filter: contrast(1.1) brightness(1.05);
-		will-change: transform;
+		opacity: 0;
+		transform: scale(1.035);
+		transition:
+			opacity 0.22s ease-out,
+			transform 0.36s ease-out,
+			filter 0.22s ease-out;
+		filter: saturate(0.88);
+	}
+
+	img.image-visible {
+		opacity: 1;
+		transform: scale(1);
+		filter: saturate(1);
 	}
 
 	.no-image {
+		display: grid;
+		place-items: center;
+		width: 100%;
 		height: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--color-hero-white);
+		padding: 1rem;
+		text-align: center;
 		font-family: var(--font-heading);
-		font-size: 1.5rem;
-		text-shadow: 2px 2px 0 #000;
+		font-size: clamp(1.5rem, 3vw, 2rem);
+		color: var(--color-hero-white);
+		background: var(--color-hero-blue);
 	}
 
 	.rating-starburst {
@@ -195,239 +330,167 @@
 		right: -20px;
 		width: 65px;
 		height: 65px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		filter: drop-shadow(3px 3px 0px black);
-		z-index: 20;
-		pointer-events: none;
+		padding: 0;
+		background: transparent;
+		border: 0;
+		cursor: pointer;
+		z-index: 3;
+		transition: transform 0.18s ease-out;
+	}
+
+	.rating-starburst:disabled {
+		cursor: wait;
+		opacity: 0.85;
+	}
+
+	.rating-starburst:focus-visible,
+	.detail-link:focus-visible {
+		outline: 4px solid var(--color-hero-yellow);
+		outline-offset: 4px;
+	}
+
+	.rating-starburst:hover:not(:disabled) {
+		transform: scale(1.04) rotate(-8deg);
 	}
 
 	.starburst-svg {
-		position: absolute;
 		width: 100%;
 		height: 100%;
-		animation: spin 10s linear infinite;
-	}
-
-	@keyframes spin {
-		from {
-			transform: rotate(0deg);
-		}
-		to {
-			transform: rotate(360deg);
-		}
+		display: block;
+		filter: drop-shadow(2px 2px 0 var(--color-hero-black));
 	}
 
 	.rating-value {
-		position: relative;
-		font-family: var(--font-heading);
-		font-size: 1.6rem;
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		font-family: var(--font-rating);
+		font-style: italic;
+		font-weight: 800;
+		font-size: 1.55rem;
+		line-height: 1;
 		color: var(--color-hero-black);
-		z-index: 2;
+		text-shadow: 1px 1px 0 var(--color-hero-white), -1px -1px 0 rgba(255, 255, 255, 0.4);
+	}
+
+	.rating-starburst.multi-digit .rating-value {
+		font-size: 1.2rem;
 	}
 
 	.card-body {
-		padding: 1.2rem;
 		display: flex;
 		flex-direction: column;
-		gap: 0.8rem;
-		min-height: 10rem;
+		gap: 1rem;
+		padding: 1.2rem;
 		min-width: 220px;
 	}
 
-	h3 {
+	h2 {
 		margin: 0;
 		min-height: 65px;
 		font-size: 1.8rem;
-		line-height: 1;
-		color: var(--color-hero-red);
+		line-height: 0.95;
+		color: var(--color-hero-yellow);
 		-webkit-text-stroke: 1px black;
-		text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
+		text-shadow: 2px 2px 0 var(--color-hero-black);
 	}
 
 	.card-meta {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.5rem;
-		align-items: center;
 		justify-content: space-between;
+		align-items: center;
+		gap: 0.8rem;
 	}
 
 	.card-set {
-		display: inline-block;
-		font-size: 0.8rem;
-		font-weight: 700;
-		color: var(--color-hero-blue);
-		padding: 0.2rem 0.8rem;
-		border: 1px solid currentColor;
-		transform: skew(-10deg);
-	}
-
-	.excerpt-accordion {
-		display: grid;
-		grid-template-rows: 0fr;
-		transition: grid-template-rows 1s cubic-bezier(0.25, 0.1, 0.25, 1);
-		overflow: hidden;
-	}
-
-	.excerpt-accordion.open {
-		grid-template-rows: 1fr;
-		transition: grid-template-rows 1s cubic-bezier(0.25, 0.1, 0.25, 1);
-	}
-
-	.excerpt-content {
-		min-height: 0;
-	}
-
-	.excerpt {
-		font-family: var(--font-comic-text);
-		font-size: 1.1rem;
-		color: #1a1a1a;
-		line-height: 1.5;
-		padding-top: 1rem;
-		border-top: 2px dashed #ccc;
-	}
-
-	.excerpt :global(p) {
-		margin: 0 0 1.2rem 0;
-	}
-
-	.excerpt :global(p:last-child) {
-		margin-bottom: 0;
-	}
-
-	.expand-prompt {
 		font-family: var(--font-heading);
-		font-size: 0.8rem;
-		font-weight: 700;
+		font-size: 1rem;
+		line-height: 1;
+		letter-spacing: 0.05em;
+		color: var(--color-hero-black);
+	}
+
+	.detail-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.45rem 0.95rem 0.35rem;
+		border: 3px dashed var(--color-hero-red);
+		background: rgba(239, 68, 68, 0.08);
+		color: var(--color-hero-red);
+		font-family: var(--font-heading);
+		font-size: 1rem;
+		letter-spacing: 0.05em;
+		text-decoration: none;
+		text-transform: uppercase;
+		line-height: 1;
+		transition:
+			color 0.2s ease-out,
+			background-color 0.2s ease-out,
+			border-color 0.2s ease-out,
+			transform 0.15s ease-out;
+	}
+
+	.detail-link:hover {
 		color: var(--color-hero-white);
-		background-color: var(--color-hero-blue);
-		text-align: center;
-		border: 2px solid #000;
-		padding: 0.2rem 0.6rem;
-		opacity: 1;
-		transition: opacity 0.3s ease-out;
-	}
-
-	.expand-prompt.hidden {
-		opacity: 0;
-		pointer-events: none;
-	}
-
-	.expand-prompt-mobile {
-		display: none;
-	}
-
-	@media (hover: hover) {
-		.trading-card:hover .expand-prompt {
-			color: var(--color-hero-red);
-			border-color: var(--color-hero-red);
-			background-color: rgba(239, 68, 68, 0.08);
-		}
-	}
-
-	@media (max-width: 1024px) {
-		.expand-prompt-desktop {
-			display: none;
-		}
-
-		.expand-prompt-mobile {
-			display: inline;
-		}
+		background-color: var(--color-hero-red);
+		border-color: var(--color-hero-red);
+		transform: translateY(-1px);
 	}
 
 	@media (max-width: 768px) {
-		h3 {
+		h2 {
 			font-size: 1.5rem;
 		}
 
 		.card-body {
-			padding: 1rem;
-			gap: 0.6rem;
-			height: fit-content;
+			min-width: 0;
 		}
 
 		.rating-starburst {
 			top: -14px;
 			right: -14px;
-			width: 55px;
-			height: 55px;
-		}
-
-		.rating-value {
-			font-size: 1.3rem;
-		}
-
-		.image-wrapper {
-			border-bottom-width: 2px;
-		}
-
-		img {
-			filter: none;
-		}
-
-		.rating-starburst {
-			filter: none;
-		}
-
-		.starburst-svg {
-			animation: none;
+			width: 76px;
+			height: 76px;
 		}
 	}
 
 	@media (max-width: 480px) {
-		h3 {
+		h2 {
 			font-size: 1.3rem;
 			-webkit-text-stroke: 0.5px black;
 		}
 
-		.card-body {
-			padding: 0.8rem;
-			gap: 0.5rem;
-			height: fit-content;
+		.card-meta {
+			align-items: stretch;
+			flex-direction: column;
 		}
 
-		.no-image {
-			font-size: 1.2rem;
-		}
-
-		.rating-starburst {
-			top: -10px;
-			right: -10px;
-			width: 45px;
-			height: 45px;
-		}
-
-		.rating-value {
-			font-size: 1.1rem;
-		}
-
-		.excerpt {
-			font-size: 1rem;
+		.detail-link {
+			width: 100%;
 		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.trading-card,
-		.excerpt-accordion,
-		.excerpt-accordion.open,
-		.trading-card::before,
-		.expand-prompt {
+		.trading-card-shell,
+		.rating-starburst,
+		.detail-link,
+		img,
+		.image-wrapper::before {
 			transition: none;
-		}
-
-		.trading-card {
 			animation: none;
 		}
 
-		.starburst-svg {
+		.starburst-svg,
+		.card-content {
 			animation: none;
+		}
+
+		.trading-card-shell,
+		.trading-card-shell:hover {
+			transform: none;
 		}
 	}
 </style>

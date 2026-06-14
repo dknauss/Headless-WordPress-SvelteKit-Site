@@ -1,4 +1,6 @@
 # Headless WordPress + SvelteKit Workshop Project for the Edmonton WordPress Meetup
+[![CI](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/actions/workflows/ci.yml/badge.svg)](https://github.com/dknauss/Headless-WordPress-SvelteKit-Site/actions/workflows/ci.yml)
+
 
 ![Screenshot from the Edmonton WordPress Meetup headless WordPress workshop recap](static/images/meetup-headless-workshop.png)
 
